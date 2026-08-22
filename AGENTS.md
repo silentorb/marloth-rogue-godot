@@ -8,24 +8,42 @@
 
 ## Layout
 
-- Primary game content lives at the repo root (`project.godot`, scenes, scripts, assets).
-- **`.mnt/unreal/marloth/`** is a **read-only** bind of external Unreal source (see `.devcontainer/devcontainer.json`). Treat it as reference or legacy context unless the task explicitly concerns it; do not assume it is built or edited as part of this Godot tree.
+- Open via [`marloth.code-workspace`](marloth.code-workspace) on **WSL/host** (File → Open Workspace from File…), then optionally **Reopen in Container**. Prefer the workspace file over opening the single folder.
+- Primary game content lives at the marloth repo root (`project.godot`, scenes, scripts, assets).
+- Sibling workspace folders (agent **reference only** — not build or runtime dependencies of marloth or the Dev Container):
+  - **`unreal-marloth`**: legacy Unreal source. Use only when the task concerns it; do not assume it is built or edited as part of this Godot tree.
+  - **`minimap`**: further-along 2D Godot project; extract applicable features and design/implementation patterns from it.
+- Those siblings use absolute host paths in the workspace file. [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) bind-mounts the same paths into the container so the folders stay available after Reopen in Container (workspace entry alone is not enough inside the container).
 
 ## Conventions
 
-- **Line endings:** Use **Unix (LF)** for all text in this repo. [`.gitattributes`](.gitattributes) enforces `eol=lf` on checkout/commit; [`.editorconfig`](.editorconfig) sets `end_of_line = lf`. The dev container sets **`files.eol`** to `\n` in VS Code / Cursor so new files default to LF. If you create or edit files on Windows outside that setup, set the editor to LF (not CRLF) and avoid reintroducing `\r\n`; use `git add --renormalize .` if you need to fix a batch of files after changing `.gitattributes`.
+- **Line endings:** Use **Unix (LF)** for all text in this repo. [`.gitattributes`](.gitattributes) enforces `eol=lf` on checkout/commit; [`.editorconfig`](.editorconfig) sets `end_of_line = lf`. The workspace and Dev Container set **`files.eol`** to `\n` in VS Code / Cursor so new files default to LF. If you create or edit files on Windows outside that setup, set the editor to LF (not CRLF) and avoid reintroducing `\r\n`; use `git add --renormalize .` if you need to fix a batch of files after changing `.gitattributes`.
 - Prefer changing game logic and scenes in this repo; keep Godot editor–managed files (`*.tscn`, `project.godot`) consistent with how Godot serializes them.
 - Match existing script language and style in the files you touch (GDScript vs C#).
-- **`godot-launcher` (Rust):** From the **repository root**, the default **wrapper build** is **`./scripts/build_godot_launcher.sh`**: it runs `cargo build --release` for the crate and **also copies** the release binary to **`dist/tools/`** (gitignored) for a stable path outside Cargo’s output tree. In the **dev container**, **`CARGO_TARGET_DIR`** is **`/workspaces/build/cargo-target`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)) so artifacts live under **`/workspaces/build/`**, not under the bind-mounted repo; **`postCreateCommand`** runs the wrapper once after the container is created. Use `cd tools/godot-launcher && cargo test` (or `cargo build`) only when you need crate-scoped compile/test iteration; do **not** treat a bare `cargo build --release` in that directory as the standard way to produce the launcher artifact for this repo.
+- **`docs/game/game-design.md` is locked:** Do **not** create, edit, or delete that file unless the **user explicitly instructed** changes to it in the current conversation. Put secondary design detail in [docs/game/features/](docs/game/features/) instead. Reading it is fine; proposing edits without that instruction is not. See [`.cursor/rules/game-design-lock.mdc`](.cursor/rules/game-design-lock.mdc).
+- **Bug regressions:** When fixing a user-reported bug the suite missed, add a regression test at the lowest sound layer—or escalate instead of brittle/flaky coverage. See [`.cursor/rules/bug-regression-tests.mdc`](.cursor/rules/bug-regression-tests.mdc) and [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md) (**Bug regressions / debugging**).
+- **Error handling:** Prefer explicit outcomes for expected failures; use exceptions only for truly exceptional cases or documented fail-fast abort boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
+- **Plans:** Every Cursor plan must include a dedicated **Testing** section and a **Commit strategy** (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
 
 ## Environment
 
-- Godot is not in the current dev container environment and exists outside of it in Windows.
+- The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless or the **Launch Godot editor** VS Code task).
+- For day-to-day editor/play outside the container, use a separate **Windows clone** of the same repo and sync with **Git**.
+- Do **not** spawn Windows Godot remotely from the container (no HTTP launcher / remote client).
 
-## Remote headless Godot (WSL launcher)
+## Product and engineering docs (source of truth)
 
-To run **headless Windows Godot** from this dev container, use the narrow HTTP launcher in [`tools/godot-launcher/`](tools/godot-launcher/). **Build it** with [`scripts/build_godot_launcher.sh`](scripts/build_godot_launcher.sh) from the repo root (requires Rust in the dev container; see [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile)). You still typically **run** `dist/tools/godot-launcher` in **WSL** so it can spawn Windows `Godot.exe`. Agents call [`scripts/godot_remote.py`](scripts/godot_remote.py) (`python3`).
+[`docs/`](docs/) is the **source of truth for functionality**. Code and tests implement the docs; when they disagree, update code to match docs (and keep docs current when changing behavior).
 
-- Set **`GODOT_REMOTE_TOKEN`** on the **host** (same value as `GODOT_LAUNCHER_TOKEN` in WSL). The dev container receives it via `containerEnv` substitution from `localEnv` (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)).
-- **`GODOT_REMOTE_URL`** defaults to `http://127.0.0.1:27182`; adjust if your launcher listens elsewhere.
-- Do **not** commit tokens. See [`tools/godot-launcher/README.md`](tools/godot-launcher/README.md) for API and security notes.
+- [docs/game/game-design.md](docs/game/game-design.md) — Marloth vision and primary pillars (locked; see Conventions). Read when needing **gameplay feel or high-level scope**; do not edit without explicit user instruction.
+- [docs/game/features/README.md](docs/game/features/README.md) — Game **features index** (secondary design / player-facing rules).
+- [docs/technical/technical-design.md](docs/technical/technical-design.md) — Architecture, C#, TDD, docs-as-SoT, presentation vs logic separation, **Godot project layout**. Read when choosing **architecture, tests, or Godot/C# boundaries**.
+
+## Feature documentation (read on demand)
+
+Do **not** preload the whole `docs/` tree for routine tasks. Skim the feature README trigger tables, then read **only** the matching file(s):
+
+- **Game** (features index / player-facing rules): [`docs/game/features/README.md`](docs/game/features/README.md)
+- **Technical** (architecture / contracts): [`docs/technical/features/README.md`](docs/technical/features/README.md)
+- Automated testing and bug regressions: [`docs/technical/features/platform/testing.md`](docs/technical/features/platform/testing.md)
+- Error handling: [`docs/technical/features/platform/error-handling.md`](docs/technical/features/platform/error-handling.md)
