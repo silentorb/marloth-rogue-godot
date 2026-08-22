@@ -1,0 +1,31 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Launch Godot editor",
+            "type": "shell",
+            "command": "\"$GODOT_BIN\" --path \"${workspaceFolder}\" --editor --rendering-driver vulkan --rendering-method forward_plus --single-window",
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "LD_LIBRARY_PATH": "/usr/lib/wsl/lib:/opt/mesa-dzn/lib",
+                    "VK_DRIVER_FILES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
+                    "VK_ICD_FILENAMES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
+                    "GALLIUM_DRIVER": "d3d12",
+                    "XDG_RUNTIME_DIR": "/mnt/wslg/runtime-dir",
+                    "WAYLAND_DISPLAY": "wayland-0",
+                    "PULSE_SERVER": "unix:/mnt/wslg/PulseServer"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "focus": false
+            },
+            "problemMatcher": [],
+            "runOptions": {
+                "instanceLimit": 1
+            }
+        }
+    ]
+}

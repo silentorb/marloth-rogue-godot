@@ -1,0 +1,19 @@
+{
+	"folders": [
+		{
+			"name": "marloth",
+			"path": "."
+		},
+		{
+			"name": "unreal-marloth",
+			"path": "/mnt/e/dev/games/marloth/Source"
+		},
+		{
+			"name": "minimap",
+			"path": "/home/chris/dev/minimap"
+		}
+	],
+	"settings": {
+		"files.eol": "\n"
+	}
+}

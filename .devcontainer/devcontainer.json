@@ -9,18 +9,28 @@
             "dotnetRuntimeVersions": "8.0"
         }
     },
-    "containerEnv": {
-        "GODOT_REMOTE_URL": "http://127.0.0.1:27182",
-        "GODOT_REMOTE_TOKEN": "${localEnv:GODOT_REMOTE_TOKEN}",
-        "CARGO_TARGET_DIR": "/workspaces/build/cargo-target"
-    },
-    "postCreateCommand": "./scripts/build_godot_launcher.sh",
     "runArgs": [
-        "--network=host"
+        "--device=/dev/dxg"
     ],
+    "containerEnv": {
+        "GODOT_BIN": "/opt/godot/Godot_v4.6-stable_mono_linux.x86_64",
+        "DISPLAY": "${localEnv:DISPLAY}",
+        "XDG_RUNTIME_DIR": "/mnt/wslg/runtime-dir",
+        "WAYLAND_DISPLAY": "wayland-0",
+        "PULSE_SERVER": "unix:/mnt/wslg/PulseServer",
+        "LD_LIBRARY_PATH": "/usr/lib/wsl/lib:/opt/mesa-dzn/lib",
+        "VK_DRIVER_FILES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
+        "VK_ICD_FILENAMES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
+        "GALLIUM_DRIVER": "d3d12"
+    },
+    // Same absolute targets as marloth.code-workspace so multi-root folders survive
+    // "Reopen in Container". Agent reference only — not build/runtime dependencies.
     "mounts": [
-        // Temporary: Unreal marloth source from host; remove or retarget when paths settle.
-        "source=/mnt/e/dev/games/marloth/Source,target=${containerWorkspaceFolder}/.mnt/unreal/marloth,type=bind,readonly"
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        "source=/mnt/wslg,target=/mnt/wslg,type=bind",
+        "source=/usr/lib/wsl,target=/usr/lib/wsl,type=bind,readonly",
+        "source=/mnt/e/dev/games/marloth/Source,target=/mnt/e/dev/games/marloth/Source,type=bind,readonly",
+        "source=/home/chris/dev/minimap,target=/home/chris/dev/minimap,type=bind,readonly"
     ],
     "customizations": {
         "vscode": {
