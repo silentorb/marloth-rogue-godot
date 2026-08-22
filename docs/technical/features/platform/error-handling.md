@@ -10,7 +10,15 @@ Cross-cutting standards for product and agent-authored code. Feature docs may st
 4. Do **not** leave half-initialized interactive state when multi-step setup fails.
 5. For any path longer than a line or two: **choose and document** the failure mode (throw, return outcome, abort UI, soft no-op) before implementing.
 
-Do **not** introduce a shared `Result<T>` library unless a later design change explicitly adds one. When adding explicit flows, prefer local Ok/Error types or `Try*` APIs.
+Do **not** introduce a shared `Result<T>` library unless a later design change explicitly adds one. When adding explicit flows, prefer local Ok/Error types or `Try*` APIs consistent with `PlaybookResult` / playbook load outcomes.
+
+## Layer guidance
+
+| Layer | Guidance |
+|-------|----------|
+| **Core** | Throw on API misuse and broken invariants. Prefer `Try*` / nullable for expected misses. No Godot logging. |
+| **Client / boot** | Fail-fast remains valid when the product contract is abort. Prefer a **single catch boundary** that surfaces (`GD.PushError`) and exits rather than scattering uncaught throws across `_Ready`. Scene changes via `ChangeSceneToFile` must check `Error.Ok` and surface failure—do not ignore the return code. |
+| **Automation / gRPC** | Keep Ok/Error on the wire for business failures. Do not invent a parallel exception API for playbook/RPC outcomes. Playbook library load returns **Ok/Error** so the wire protocol can report failure **without aborting** the Godot process. |
 
 ## Agent checklist
 

@@ -5,13 +5,24 @@
     <RootNamespace>Marloth</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <DefaultItemExcludes>$(DefaultItemExcludes);**/obj/**;**/bin/**</DefaultItemExcludes>
   </PropertyGroup>
+  <!--
+    Godot 4 looks up C# scripts only in the main assembly. Client Node scripts under
+    src/Marloth.Client/ must compile into this project (not a referenced class library).
+    Marloth.Client.csproj remains for non-Godot consumers (e.g. test projects).
+  -->
   <ItemGroup>
     <ProjectReference Include="src/Marloth.Core/Marloth.Core.csproj" />
+    <ProjectReference Include="src/Marloth.Automation/Marloth.Automation.csproj" />
+    <ProjectReference Include="src/Marloth.Automation.Contracts/Marloth.Automation.Contracts.csproj" />
+    <PackageReference Include="Grpc.Core" Version="2.46.6" />
   </ItemGroup>
-  <!-- Godot.NET.Sdk globs all *.cs under the project root; keep tests and class libraries out of this assembly. -->
+  <!-- Godot.NET.Sdk globs all *.cs under the project root; keep only Client script sources. -->
   <ItemGroup>
     <Compile Remove="tests/**/*.cs" />
-    <Compile Remove="src/**/*.cs" />
+    <Compile Remove="src/Marloth.Core/**/*.cs" />
+    <Compile Remove="src/Marloth.Automation/**/*.cs" />
+    <Compile Remove="src/Marloth.Automation.Contracts/**/*.cs" />
   </ItemGroup>
 </Project>

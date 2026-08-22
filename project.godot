@@ -15,6 +15,10 @@ run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "C#", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+GodotRpcHost="*res://src/Marloth.Client/GodotRpcHost.cs"
+
 [dotnet]
 
 project/assembly_name="marloth"

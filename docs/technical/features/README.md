@@ -12,7 +12,7 @@ When a topic has both player-facing rules and engineering contracts, keep contra
 | File | Read when… |
 |------|------------|
 | [platform/error-handling.md](platform/error-handling.md) | Adding or changing **APIs**, loaders, boot paths, or any **multi-step** logic where failures must be chosen (throw vs explicit outcome vs abort). |
-| [platform/testing.md](platform/testing.md) | Working on **automated tests**, `dotnet test`, Godot-dependent checks, or **bug-driven regression** policy. |
+| [platform/testing.md](platform/testing.md) | Working on **automated tests**: unit vs functional layout, **xUnit**, protobuf gRPC Godot **playbooks**, `dotnet test`, **Godot-dependent** tests (`GODOT_BIN`), **3D determinism** / functional **tolerance ranges**, or **bug-driven regression** policy (failing test first / escalate brittle coverage). |
 | [../technical-design.md](../technical-design.md) | **Architecture**, docs-as-SoT, presentation vs logic boundaries, **Godot directory layout**, or TDD intent. |
 | [../../game/game-design.md](../../game/game-design.md) | Reading **gameplay vision** or high-level feel. **Do not edit** unless the user explicitly instructed changes to that file. |
 

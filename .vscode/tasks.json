@@ -2,6 +2,21 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "Run Godot functional tests",
+            "type": "shell",
+            "command": "./scripts/run_godot_functional_tests.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": false
+            },
+            "problemMatcher": "$msCompile"
+        },
+        {
             "label": "Launch Godot editor",
             "type": "shell",
             "command": "\"$GODOT_BIN\" --path \"${workspaceFolder}\" --editor --rendering-driver vulkan --rendering-method forward_plus --single-window",

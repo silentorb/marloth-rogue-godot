@@ -10,7 +10,7 @@ When fixing a **user-reported bug** that the current suite did not catch, treat 
 ## Workflow
 
 1. Confirm whether an existing test **should** have failed for this bug.
-2. If not, add a **failing test first** at the **lowest layer** that can reproduce it (unit → manual / Godot play).
+2. If not, add a **failing test first** at the **lowest layer** that can reproduce it (unit → simulation functional → Godot playbook).
 3. Fix the product code; keep the test green.
 4. Prefer asserting **documented** behavior ([docs/technical/technical-design.md](docs/technical/technical-design.md), feature docs). If the report itself defines missing behavior, update the docs in the same change and test against that.
 

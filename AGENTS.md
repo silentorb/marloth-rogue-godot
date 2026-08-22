@@ -5,6 +5,12 @@
 - **Engine**: Godot **4.6**, Forward Plus renderer, **Jolt** for 3D physics.
 - **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`).
 - **Name / assembly**: Application id is `marloth`; `project.godot` sets `[dotnet]` `project/assembly_name` for C# when used.
+- **C# modules**:
+  - **`Marloth.Core`** — engine-agnostic logic; see [`src/Marloth.Core/`](src/Marloth.Core/).
+  - **`Marloth.Client`** — Godot presentation and `GodotRpcHost`; see [`src/Marloth.Client/AGENTS.md`](src/Marloth.Client/AGENTS.md). Sources compile into the host assembly.
+  - **`Marloth.Automation`** — in-process Godot playbook helpers; see [`src/Marloth.Automation/AGENTS.md`](src/Marloth.Automation/AGENTS.md).
+  - **`Marloth.Automation.Contracts`** — gRPC/playbook contracts; see [`src/Marloth.Automation.Contracts/AGENTS.md`](src/Marloth.Automation.Contracts/AGENTS.md).
+  - Root [marloth.csproj](marloth.csproj) is the Godot host and **compiles Client scripts into the main assembly** (Godot only resolves C# scripts from that assembly).
 
 ## Layout
 
@@ -27,7 +33,7 @@
 
 ## Environment
 
-- The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless or the **Launch Godot editor** VS Code task).
+- The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
 - For day-to-day editor/play outside the container, use a separate **Windows clone** of the same repo and sync with **Git**.
 - Do **not** spawn Windows Godot remotely from the container (no HTTP launcher / remote client).
 
