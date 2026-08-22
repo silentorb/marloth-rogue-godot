@@ -31,19 +31,6 @@
 - For day-to-day editor/play outside the container, use a separate **Windows clone** of the same repo and sync with **Git**.
 - Do **not** spawn Windows Godot remotely from the container (no HTTP launcher / remote client).
 
-## Product and engineering docs (source of truth)
+## Product and engineering docs
 
-[`docs/`](docs/) is the **source of truth for functionality**. Code and tests implement the docs; when they disagree, update code to match docs (and keep docs current when changing behavior).
-
-- [docs/game/game-design.md](docs/game/game-design.md) — Marloth vision and primary pillars (locked; see Conventions). Read when needing **gameplay feel or high-level scope**; do not edit without explicit user instruction.
-- [docs/game/features/README.md](docs/game/features/README.md) — Game **features index** (secondary design / player-facing rules).
-- [docs/technical/technical-design.md](docs/technical/technical-design.md) — Architecture, C#, TDD, docs-as-SoT, presentation vs logic separation, **Godot project layout**. Read when choosing **architecture, tests, or Godot/C# boundaries**.
-
-## Feature documentation (read on demand)
-
-Do **not** preload the whole `docs/` tree for routine tasks. Skim the feature README trigger tables, then read **only** the matching file(s):
-
-- **Game** (features index / player-facing rules): [`docs/game/features/README.md`](docs/game/features/README.md)
-- **Technical** (architecture / contracts): [`docs/technical/features/README.md`](docs/technical/features/README.md)
-- Automated testing and bug regressions: [`docs/technical/features/platform/testing.md`](docs/technical/features/platform/testing.md)
-- Error handling: [`docs/technical/features/platform/error-handling.md`](docs/technical/features/platform/error-handling.md)
+[`docs/`](docs/) is the **source of truth for functionality**. How that tree is split (game vs technical), how to read feature indexes, and the docs-win rule live in [docs/README.md](docs/README.md)—open that file when you need docs layout, not this one.
