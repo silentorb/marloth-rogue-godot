@@ -1,0 +1,39 @@
+services:
+  marloth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ..:/workspaces/marloth:cached
+      - /tmp/.X11-unix:/tmp/.X11-unix
+      - /mnt/wslg:/mnt/wslg
+      - /usr/lib/wsl:/usr/lib/wsl:ro
+      - /mnt/e/dev/games/marloth/Source:/mnt/e/dev/games/marloth/Source:ro
+      - /mnt/e/dev/games/marloth/Plugins:/mnt/e/dev/games/marloth/Plugins:ro
+      - /home/chris/dev/minimap:/home/chris/dev/minimap:ro
+      - /home/chris/dev/margen:/home/chris/dev/margen
+      - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
+    environment:
+      GODOT_BIN: /opt/godot/Godot_v4.6-stable_mono_linux.x86_64
+      DISPLAY: ${DISPLAY:-}
+      XDG_RUNTIME_DIR: /mnt/wslg/runtime-dir
+      WAYLAND_DISPLAY: wayland-0
+      PULSE_SERVER: unix:/mnt/wslg/PulseServer
+      LD_LIBRARY_PATH: /usr/lib/wsl/lib:/opt/mesa-dzn/lib
+      VK_DRIVER_FILES: /opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json
+      VK_ICD_FILENAMES: /opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json
+      GALLIUM_DRIVER: d3d12
+    devices:
+      - /dev/dxg
+    command: sleep infinity
+
+  margen:
+    build:
+      context: /home/chris/dev/margen/.devcontainer
+      dockerfile: Dockerfile
+    volumes:
+      - /home/chris/dev/margen:/workspaces/margen
+      - /mnt/e/dev/games/marloth/Source:/mnt/e/dev/games/marloth/Source:ro
+      - /mnt/e/dev/games/marloth/Plugins:/mnt/e/dev/games/marloth/Plugins:ro
+    working_dir: /workspaces/margen
+    command: sleep infinity

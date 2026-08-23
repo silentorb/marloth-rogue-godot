@@ -9,8 +9,20 @@
 			"path": "/mnt/e/dev/games/marloth/Source"
 		},
 		{
+			"name": "unreal-marloth-plugins",
+			"path": "/mnt/e/dev/games/marloth/Plugins"
+		},
+		{
 			"name": "minimap",
 			"path": "/home/chris/dev/minimap"
+		},
+		{
+			"name": "margen",
+			"path": "/home/chris/dev/margen"
+		},
+		{
+			"name": "margen-godot",
+			"path": "/home/chris/dev/margen-godot"
 		}
 	],
 	"settings": {

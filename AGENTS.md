@@ -16,10 +16,13 @@
 
 - Open via [`marloth.code-workspace`](marloth.code-workspace) on **WSL/host** (File → Open Workspace from File…), then optionally **Reopen in Container**. Prefer the workspace file over opening the single folder.
 - Primary game content lives at the marloth repo root (`project.godot`, scenes, scripts, assets).
-- Sibling workspace folders (agent **reference only** — not build or runtime dependencies of marloth or the Dev Container):
-  - **`unreal-marloth`**: legacy Unreal source. Use only when the task concerns it; do not assume it is built or edited as part of this Godot tree.
-  - **`minimap`**: further-along 2D Godot project; extract applicable features and design/implementation patterns from it.
-- Those siblings use absolute host paths in the workspace file. [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) bind-mounts the same paths into the container so the folders stay available after Reopen in Container (workspace entry alone is not enough inside the container).
+- Sibling workspace folders (not build or runtime dependencies of marloth unless a task says otherwise):
+  - **`unreal-marloth`** (reference only): Unreal **`Source/`** — Generation*, Modeling, SimulationGeneration, and related game modules. Use only when the task concerns legacy Unreal code; do not assume it is built or edited as part of this Godot tree.
+  - **`unreal-marloth-plugins`** (reference only): Unreal **`Plugins/`** — Mythic, MythicTesting, UINavigation (and any future plugins mounted the same way). MythicSimulation is the main utility dependency for generation ports.
+  - **`minimap`** (reference only): further-along 2D Godot project; extract applicable features and design/implementation patterns from it.
+  - **`margen`**: engine-agnostic world generation library (**`margen::`**) plus the **`mythic::`** utility layer in the same repo; separate git tree—edit and commit there when work targets generation or mythic ports, not marloth.
+  - **`margen-godot`**: GDExtension that converts margen datasets into Godot entities; separate git tree—edit and commit there when work targets the extension, not marloth.
+- Those siblings use absolute host paths in [`marloth.code-workspace`](marloth.code-workspace). [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json) and [`.devcontainer/docker-compose.yml`](.devcontainer/docker-compose.yml) bind-mount the same paths into the container (marloth repo at `..:/workspaces/marloth`, readonly Unreal Source/Plugins, writable margen siblings) so folders stay available after **Reopen in Container** (workspace entry alone is not enough inside the container).
 
 ## Conventions
 
@@ -30,6 +33,7 @@
 - **Bug regressions:** When fixing a user-reported bug the suite missed, add a regression test at the lowest sound layer—or escalate instead of brittle/flaky coverage. See [`.cursor/rules/bug-regression-tests.mdc`](.cursor/rules/bug-regression-tests.mdc) and [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md) (**Bug regressions / debugging**).
 - **Error handling:** Prefer explicit outcomes for expected failures; use exceptions only for truly exceptional cases or documented fail-fast abort boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
 - **Plans:** Every Cursor plan must include a dedicated **Testing** section and a **Commit strategy** (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
+- **C++ (native / margen):** Follow the shared guide in the margen repo: [docs/cpp-style.md](../margen/docs/cpp-style.md) (also used by margen-godot).
 
 ## Environment
 

@@ -1,16 +1,26 @@
 {
     "name": "marloth",
-    "build": {
-        "dockerfile": "Dockerfile"
-    },
+    "dockerComposeFile": "docker-compose.yml",
+    "service": "marloth",
+    "workspaceFolder": "/workspaces/marloth",
     "features": {
         "ghcr.io/devcontainers/features/dotnet:2": {
             "version": "8.0",
             "dotnetRuntimeVersions": "8.0"
         }
     },
-    "runArgs": [
-        "--device=/dev/dxg"
+    // Same absolute targets as marloth.code-workspace so multi-root folders survive
+    // "Reopen in Container". minimap / unreal-marloth / unreal-marloth-plugins are
+    // reference-only (readonly); margen and margen-godot are read-write.
+    "mounts": [
+        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
+        "source=/mnt/wslg,target=/mnt/wslg,type=bind",
+        "source=/usr/lib/wsl,target=/usr/lib/wsl,type=bind,readonly",
+        "source=/mnt/e/dev/games/marloth/Source,target=/mnt/e/dev/games/marloth/Source,type=bind,readonly",
+        "source=/mnt/e/dev/games/marloth/Plugins,target=/mnt/e/dev/games/marloth/Plugins,type=bind,readonly",
+        "source=/home/chris/dev/minimap,target=/home/chris/dev/minimap,type=bind,readonly",
+        "source=/home/chris/dev/margen,target=/home/chris/dev/margen,type=bind",
+        "source=/home/chris/dev/margen-godot,target=/home/chris/dev/margen-godot,type=bind"
     ],
     "containerEnv": {
         "GODOT_BIN": "/opt/godot/Godot_v4.6-stable_mono_linux.x86_64",
@@ -23,14 +33,8 @@
         "VK_ICD_FILENAMES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
         "GALLIUM_DRIVER": "d3d12"
     },
-    // Same absolute targets as marloth.code-workspace so multi-root folders survive
-    // "Reopen in Container". Agent reference only — not build/runtime dependencies.
-    "mounts": [
-        "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
-        "source=/mnt/wslg,target=/mnt/wslg,type=bind",
-        "source=/usr/lib/wsl,target=/usr/lib/wsl,type=bind,readonly",
-        "source=/mnt/e/dev/games/marloth/Source,target=/mnt/e/dev/games/marloth/Source,type=bind,readonly",
-        "source=/home/chris/dev/minimap,target=/home/chris/dev/minimap,type=bind,readonly"
+    "runArgs": [
+        "--device=/dev/dxg"
     ],
     "customizations": {
         "vscode": {

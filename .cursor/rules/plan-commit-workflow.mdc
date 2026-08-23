@@ -19,7 +19,7 @@ Doc-only or pure-config plans still need a short Testing section (e.g. “no aut
 
 ## Workspace git layout
 
-The primary git repo is **marloth** (workspace folder `marloth`). Sibling workspace folders **minimap** and **unreal-marloth** are separate trees; include them in Commit strategy **only when the plan actually edits those repos**. Run baseline and commit git commands in each affected repo.
+The primary git repo is **marloth** (workspace folder `marloth`). Sibling workspace folders **minimap**, **unreal-marloth**, **margen**, and **margen-godot** are separate trees; include them in Commit strategy **only when the plan actually edits those repos**. Run baseline and commit git commands in each affected repo.
 
 ## 1. Baseline snapshot
 
@@ -82,7 +82,7 @@ Use this shape (adjust repo names when siblings are in scope):
 Say **commit** (or **commit per the plan**) after review.
 ```
 
-If the plan also edits minimap or unreal-marloth, add a baseline bullet and an Intended commits subsection for each; keep one commit per repo.
+If the plan also edits minimap, unreal-marloth, margen, or margen-godot, add a baseline bullet and an Intended commits subsection for each; keep one commit per repo.
 
 ## Commit execution
 
