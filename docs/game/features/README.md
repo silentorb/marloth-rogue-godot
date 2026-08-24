@@ -12,5 +12,4 @@ When a topic has both player-facing rules and engineering contracts, keep the pl
 | File | Read when… |
 |------|------------|
 | [../game-design.md](../game-design.md) | Reading **gameplay vision**, genre pillars, or high-level feel. **Do not edit** unless the user explicitly instructed changes to that file. |
-
-*(Add rows as game feature docs are written.)*
+| [gameplay/story-progression.md](gameplay/story-progression.md) | **Progression beats**, story graph player flow, gating/backtracking intent, or future narrative layers on the generation DAG. |

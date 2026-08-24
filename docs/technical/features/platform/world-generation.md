@@ -10,12 +10,20 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 
 | Piece | Repo / namespace | Role |
 |-------|------------------|------|
-| **mythic** | sibling repo **`margen`** — `mythic::`, CMake target `mythic::mythic` | General utilities ported from Unreal **MythicSimulation** (`Dice`, `Vec3i`, `InlineVector`, `FixedArray`, …). **Not** world generation. |
-| **margen** | Same repo — `margen::`, CMake target `margen::margen` | World generation only (Session 0: **GenerationGraphing** — DAG, story, location branching). Links **mythic** publicly. |
+| **mythic** | sibling repo **`margen`** — `mythic::`, CMake target `mythic::mythic` | General utilities ported from Unreal **MythicSimulation** (`Dice`, `Vector3i`, `InlineVector`, `FixedArray`, …). **Not** world generation. |
+| **margen** | Same repo — `margen::`, CMake target `margen::margen` | World generation (Stage 0 graphing + Stage 1 core types and story → `CellGrid`). Links **mythic** publicly. |
 | **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: convert margen **output datasets** into engine types. No generation algorithms here. |
 | **marloth** | This repo | Godot game, C# Core/Client, and future **integrator** code that calls margen (directly or via the extension). |
 
-Detailed design and port roadmap: margen repo `docs/overview.md` and `docs/mythic.md` (sibling workspace folder **`margen`**).
+Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**).
+
+## Story graph
+
+Progression-first layout: abstract story DAG → spatial `CellGrid`. Player-facing intent: [story progression](../../game/features/gameplay/story-progression.md). Technical pipeline: margen [`docs/story-graph.md`](../../../../margen/docs/story-graph.md).
+
+In Unreal reference, this path is toggled with `GENERATE_STORY`; the default path uses prefab start + winding-path growth and analysis-derived sectors. Both remain valid design options.
+
+**Margen Stage 1 (current):** `generateStoryGraph` → `storyToLocationBranching` → `storyToClusters` via `generateStoryGrid`; produces a sparse tagged `CellGrid`. Cluster rasterization and Godot integration are not yet wired.
 
 ## Unreal reference folders (read-only)
 
@@ -39,10 +47,10 @@ The margen repo also has its own `.devcontainer` for C++ build/test; the marloth
 
 ## Build and test (margen)
 
-From a Linux environment with CMake and a C++ toolchain:
+From a Linux environment with CMake, Ninja, and a C++ toolchain:
 
 ```bash
-cmake -S . -B build -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Debug
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
