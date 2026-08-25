@@ -24,7 +24,7 @@ Progression-first layout: abstract story DAG → spatial `CellGrid`. Player-faci
 
 In Unreal reference, this path is toggled with `GENERATE_STORY`; the default path uses prefab start + winding-path growth and analysis-derived sectors. Both remain valid design options.
 
-**Margen Stage 1–2 (current):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid`. Godot integration is not yet wired.
+**Margen Stage 1–2 (current):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid` with spatial `BiomeDistribution` sampling when multiple biomes are configured. Godot integration is not yet wired.
 
 ## Unreal reference folders (read-only)
 
