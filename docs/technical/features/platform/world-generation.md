@@ -11,7 +11,7 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 | Piece | Repo / crate | Role |
 |-------|--------------|------|
 | **mythic** | sibling repo **`margen`** — crate `mythic` | General utilities ported from Unreal **MythicSimulation** (`Dice`, `Vector3i`, …). **Not** world generation. |
-| **margen** | Same repo — crate `margen` | World generation (Stage 0 graphing + Stage 1 core types and story → `CellGrid`). Depends on mythic. |
+| **margen** | Same repo — crate `margen` | World generation (Stage 0 graphing + Stage 1 core/story → expanded `CellGrid` via rasterize). Depends on mythic. |
 | **margen-ffi** | Same repo — crate `margen-ffi`, header `include/margen.h` | C ABI for engine hosts. |
 | **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: convert margen **output datasets** into engine types via the C ABI. No generation algorithms here. |
 | **marloth** | This repo | Godot game, C# Core/Client, and future **integrator** code that calls margen (via the extension and/or P/Invoke). |
@@ -24,7 +24,7 @@ Progression-first layout: abstract story DAG → spatial `CellGrid`. Player-faci
 
 In Unreal reference, this path is toggled with `GENERATE_STORY`; the default path uses prefab start + winding-path growth and analysis-derived sectors. Both remain valid design options.
 
-**Margen Stage 1 (current):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` via `generate_story_grid`; produces a sparse tagged `CellGrid`. Cluster rasterization and Godot integration are not yet wired.
+**Margen Stage 1–2 (current):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid`. Godot integration is not yet wired.
 
 ## Unreal reference folders (read-only)
 
