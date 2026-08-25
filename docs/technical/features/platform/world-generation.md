@@ -16,7 +16,7 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 | **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: convert margen **output datasets** into engine types via the C ABI. No generation algorithms here. |
 | **marloth** | This repo | Godot game, C# Core/Client, and future **integrator** code that calls margen (via the extension and/or P/Invoke). |
 
-Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
+Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), [`docs/sector-analysis.md`](../../../../margen/docs/sector-analysis.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
 
 ## Story graph
 
@@ -24,7 +24,9 @@ Progression-first layout: abstract story DAG → spatial `CellGrid`. Player-faci
 
 In Unreal reference, this path is toggled with `GENERATE_STORY`; the default path uses prefab start + winding-path growth and analysis-derived sectors. Both remain valid design options.
 
-**Margen Stage 1–2 (current):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid` with spatial `BiomeDistribution` sampling when multiple biomes are configured. Godot integration is not yet wired.
+**Margen Stage 1–2 (structure):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid` with spatial `BiomeDistribution` sampling when multiple biomes are configured.
+
+**Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in the margen crate (path-depth sector assignment and level-switch placement). The C ABI still exposes story-grid generation only; Godot integration is not yet wired.
 
 ## Unreal reference folders (read-only)
 
