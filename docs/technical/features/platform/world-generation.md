@@ -1,6 +1,6 @@
 # World generation (margen stack)
 
-Marloth’s procedural worlds will come from the **margen** stack: engine-agnostic generation in **Rust**, optional **mythic** utilities in the same repo, a **C ABI** (`margen-ffi` / `include/margen.h`), and a **margen-godot** GDExtension when Godot needs meshes and scenes. Legacy Unreal code remains **read-only reference** in the workspace—not a build dependency of the Godot game.
+Marloth’s procedural worlds will come from the **margen** stack: engine-agnostic generation in **Rust**, **mythic** utility crates in the same repo, a **C ABI** (`margen_ffi` / `include/margen.h`), and a **margen-godot** GDExtension when Godot needs meshes and scenes. Legacy Unreal code remains **read-only reference** in the workspace—not a build dependency of the Godot game.
 
 For Marloth-specific glue (when generation is wired into scenes), prefer this repo’s game code (likely **C#** P/Invoke or the GDExtension) and docs; do not put algorithms in margen-godot.
 
@@ -10,13 +10,16 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 
 | Piece | Repo / crate | Role |
 |-------|--------------|------|
-| **mythic** | sibling repo **`margen`** — crate `mythic` | General utilities ported from Unreal **MythicSimulation** (`Dice`, `Vector3i`, …). **Not** world generation. |
-| **margen** | Same repo — crate `margen` | World generation (Stage 0 graphing + Stage 1 core/story → expanded `CellGrid` via rasterize). Depends on mythic. |
-| **margen-ffi** | Same repo — crate `margen-ffi`, header `include/margen.h` | C ABI for engine hosts. |
+| **mythic_*** | sibling repo **`margen`** — `mythic_math`, `mythic_dice`, `mythic_distribution` | General utilities from Unreal **MythicSimulation**. **Not** world generation. |
+| **margen_generation** | Same repo | Core types, biomes, spatial `BiomeDistribution`. |
+| **margen_generation_graphing** | Same repo | Story DAG, branching, `sectors_to_dag`. |
+| **margen_generation_structure** | Same repo | Clusters, story → expanded `CellGrid`, prefab-seed `windingPath` / `generate_world_grid`. |
+| **margen_generation_graphing_analysis** | Same repo | `partition_sectors`, `generate_goals`. |
+| **margen_ffi** | Same repo — crate `margen_ffi`, header `include/margen.h` | C ABI for engine hosts (story-grid today). |
 | **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: convert margen **output datasets** into engine types via the C ABI. No generation algorithms here. |
 | **marloth** | This repo | Godot game, C# Core/Client, and future **integrator** code that calls margen (via the extension and/or P/Invoke). |
 
-Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), [`docs/sector-analysis.md`](../../../../margen/docs/sector-analysis.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
+Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), [`docs/winding-path.md`](../../../../margen/docs/winding-path.md), [`docs/sector-analysis.md`](../../../../margen/docs/sector-analysis.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
 
 ## Story graph
 
@@ -26,7 +29,9 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Stage 1–2 (structure):** `generate_story_graph` → `story_to_location_branching` → `story_to_clusters` → `rasterize_cluster_grid` (optional `connect_cluster_cells`, default off) via `generate_story_grid`; produces an expanded room-footprint `CellGrid` with spatial `BiomeDistribution` sampling when multiple biomes are configured.
 
-**Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in the margen crate (path-depth sector assignment and level-switch placement). The C ABI still exposes story-grid generation only; Godot integration is not yet wired.
+**Margen production grid:** `generate_world_grid` (minimal prefab seed + `winding_path`) is ported; see margen [`docs/winding-path.md`](../../../../margen/docs/winding-path.md).
+
+**Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement). The C ABI still exposes story-grid generation only; Godot integration is not yet wired.
 
 ## Unreal reference folders (read-only)
 
@@ -54,7 +59,7 @@ From an environment with a Rust toolchain:
 
 ```bash
 cargo test
-cargo build -p margen-ffi --release
+cargo build -p margen_ffi --release
 ```
 
 Run these commands in the **margen** repo root.
