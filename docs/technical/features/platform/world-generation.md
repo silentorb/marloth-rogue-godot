@@ -15,9 +15,9 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 | **margen_generation_graphing** | Same repo | Story DAG, branching, `sectors_to_dag`. |
 | **margen_generation_structure** | Same repo | Clusters, story → expanded `CellGrid`, prefab-seed `windingPath` / `generate_world_grid`. |
 | **margen_generation_graphing_analysis** | Same repo | `partition_sectors`, `generate_goals`. |
-| **margen_ffi** | Same repo — crate `margen_ffi`, header `include/margen.h` | C ABI for engine hosts (story-grid today). |
-| **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: convert margen **output datasets** into engine types via the C ABI. No generation algorithms here. |
-| **marloth** | This repo | Godot game, C# Core/Client, and future **integrator** code that calls margen (via the extension and/or P/Invoke). |
+| **margen_ffi** | Same repo — crate `margen_ffi`, header `include/margen.h` | C ABI for engine hosts (story grid + **world-faces** / `RenderFace` export). |
+| **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: `MargenWorldMesh` converts face datasets into `ArrayMesh` + placeholder materials via the C ABI. |
+| **marloth** | This repo | Godot game; loads the extension from [`addons/margen/`](../../../../addons/margen/) and provides a debug scene. |
 
 Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), [`docs/winding-path.md`](../../../../margen/docs/winding-path.md), [`docs/sector-analysis.md`](../../../../margen/docs/sector-analysis.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
 
@@ -31,7 +31,9 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen production grid:** `generate_world_grid` (minimal prefab seed + `winding_path`) is ported; see margen [`docs/winding-path.md`](../../../../margen/docs/winding-path.md).
 
-**Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement). The C ABI still exposes story-grid generation only; Godot integration is not yet wired.
+**Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement).
+
+**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene.
 
 ## Unreal reference folders (read-only)
 

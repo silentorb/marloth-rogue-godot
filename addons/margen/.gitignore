@@ -1,0 +1,4 @@
+# Built native libraries (install via margen-godot scripts/install-to-marloth.sh)
+bin/*.so
+bin/*.dll
+bin/*.dylib
