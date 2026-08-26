@@ -1,0 +1,35 @@
+# Lean Windows cross-compile image for Marloth C# + margen/margen-godot MinGW natives.
+# No Godot, Mesa, or WSLg — keep toolchains separate from the Linux marloth service.
+FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim
+
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		build-essential \
+		ca-certificates \
+		curl \
+		cmake \
+		g++-mingw-w64-x86-64 \
+		git \
+		ninja-build \
+		python3 \
+		rsync \
+	&& rm -rf /var/lib/apt/lists/* \
+	&& update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
+	&& update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+
+# Rust stable + Windows GNU target (matches MinGW GDExtension ABI).
+ENV RUSTUP_HOME=/usr/local/rustup \
+	CARGO_HOME=/usr/local/cargo \
+	PATH=/usr/local/cargo/bin:$PATH \
+	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+	&& rustup target add x86_64-pc-windows-gnu \
+	&& mkdir -p /usr/local/cargo \
+	&& printf '%s\n' \
+		'[target.x86_64-pc-windows-gnu]' \
+		'linker = "x86_64-w64-mingw32-gcc"' \
+		> /usr/local/cargo/config.toml \
+	&& git config --system --add safe.directory '*'
+
+WORKDIR /workspaces/marloth

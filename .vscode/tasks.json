@@ -41,6 +41,21 @@
             "runOptions": {
                 "instanceLimit": 1
             }
+        },
+        {
+            "label": "Build Windows play tree",
+            "type": "shell",
+            "command": "docker compose -f \"${workspaceFolder}/.devcontainer/docker-compose.yml\" up -d marloth-win && docker compose -f \"${workspaceFolder}/.devcontainer/docker-compose.yml\" exec -T marloth-win ./scripts/build-windows.sh",
+            "options": {
+                "cwd": "${workspaceFolder}/.devcontainer"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": false
+            },
+            "problemMatcher": []
         }
     ]
 }

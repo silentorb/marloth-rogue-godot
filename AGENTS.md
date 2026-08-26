@@ -38,8 +38,15 @@
 ## Environment
 
 - The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
-- For day-to-day editor/play outside the container, use a separate **Windows clone** of the same repo and sync with **Git**.
-- Do **not** spawn Windows Godot remotely from the container (no HTTP launcher / remote client).
+- **Windows play/test:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) keeps MinGW / Rust `windows-gnu` / .NET `win-x64` toolchains separate from the Linux image. From the WSL host (or the **Build Windows play tree** task):
+
+  ```bash
+  docker compose -f .devcontainer/docker-compose.yml up -d marloth-win
+  docker compose -f .devcontainer/docker-compose.yml exec marloth-win ./scripts/build-windows.sh
+  ```
+
+  That syncs a playable tree to **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`), including Windows margen DLLs and C# `win-x64` assemblies. Open that folder in **Windows Godot 4.6 .NET**. Cursor stays attached to the **`marloth`** service, not `marloth-win`.
+- Do **not** spawn Windows Godot remotely from the Linux container (no HTTP launcher / remote client).
 
 ## Product and engineering docs
 

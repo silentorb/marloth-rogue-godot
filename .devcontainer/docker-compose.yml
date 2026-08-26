@@ -37,3 +37,21 @@ services:
       - /mnt/e/dev/games/marloth/Plugins:/mnt/e/dev/games/marloth/Plugins:ro
     working_dir: /workspaces/margen
     command: sleep infinity
+
+  # Windows cross-compile only (MinGW + Rust windows-gnu + .NET win-x64).
+  # Not the Cursor attach target — use: docker compose exec marloth-win ./scripts/build-windows.sh
+  marloth-win:
+    build:
+      context: .
+      dockerfile: Dockerfile.windows-cross
+    volumes:
+      - ..:/workspaces/marloth:cached
+      - /home/chris/dev/margen:/home/chris/dev/margen
+      - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
+      - /mnt/e/dev/games/marloth-godot:/mnt/e/dev/games/marloth-godot
+    environment:
+      MARLOTH_WIN_OUT: /mnt/e/dev/games/marloth-godot
+      MARGEN_ROOT: /home/chris/dev/margen
+      MARGEN_GODOT_ROOT: /home/chris/dev/margen-godot
+    working_dir: /workspaces/marloth
+    command: sleep infinity

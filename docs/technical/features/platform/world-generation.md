@@ -33,7 +33,7 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement).
 
-**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene.
+**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows editor play, use the **`marloth-win`** service and [`scripts/build-windows.sh`](../../../../scripts/build-windows.sh) (MinGW cross-build → `$MARLOTH_WIN_OUT`, default `/mnt/e/dev/games/marloth-godot`).
 
 ## Unreal reference folders (read-only)
 
@@ -53,7 +53,7 @@ When citing Unreal sources in ports or reviews, prefer paths under **`unreal-mar
 - [`.devcontainer/devcontainer.json`](../../../../.devcontainer/devcontainer.json) — `workspaceFolder` `/workspaces/marloth`, readonly Plugins mount
 - [`.devcontainer/docker-compose.yml`](../../../../.devcontainer/docker-compose.yml) — `..:/workspaces/marloth`, plus readonly Source/Plugins and writable margen / margen-godot
 
-The margen repo also has its own `.devcontainer` for Rust build/test; the marloth compose file includes a **`margen`** service for optional side-by-side work.
+The margen repo also has its own `.devcontainer` for Rust build/test; the marloth compose file includes a **`margen`** service for optional side-by-side work and a **`marloth-win`** service for Windows cross-compiles (not the Cursor attach target).
 
 ## Build and test (margen)
 
