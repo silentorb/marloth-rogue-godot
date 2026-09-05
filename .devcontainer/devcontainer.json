@@ -36,6 +36,9 @@
     "runArgs": [
         "--device=/dev/dxg"
     ],
+    // Named volume marloth-godot-cache is created root-owned; Godot and test
+    // scripts must write .godot as vscode.
+    "postStartCommand": "bash -lc 'if [[ -d /workspaces/marloth/.godot && ! -w /workspaces/marloth/.godot ]]; then sudo chown -R \"$(id -u):$(id -g)\" /workspaces/marloth/.godot; fi'",
     "customizations": {
         "vscode": {
             "extensions": [],

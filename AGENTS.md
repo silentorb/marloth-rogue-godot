@@ -33,16 +33,19 @@
 - **Bug regressions:** When fixing a user-reported bug the suite missed, add a regression test at the lowest sound layer—or escalate instead of brittle/flaky coverage. See [`.cursor/rules/bug-regression-tests.mdc`](.cursor/rules/bug-regression-tests.mdc) and [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md) (**Bug regressions / debugging**).
 - **Error handling:** Prefer explicit outcomes for expected failures; use exceptions only for truly exceptional cases or documented fail-fast abort boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
 - **Plans:** Every Cursor plan must include a dedicated **Testing** section and a **Commit strategy** (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
+- **Offline dev:** Do not add runtime `curl`/`wget` download steps to scripts or tasks. Fetch tools and dependencies in **Dockerfiles** / image build only. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc).
 - **Native / margen:** Algorithms are Rust in the margen repo ([docs/rust-style.md](../margen/docs/rust-style.md)). Hosts consume the **C ABI**; margen-godot GDExtension sources remain C++ (godot-cpp).
 
 ## Environment
 
 - The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
-- **Windows play/test:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) keeps MinGW / Rust `windows-gnu` / .NET `win-x64` toolchains separate from the Linux image. From the WSL host (or the **Build Windows play tree** task):
+- **Offline policy:** Tool downloads happen in [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) and [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross) only — not in repo scripts. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc). Godot’s `.godot/` project cache is redirected to a compose volume (`marloth-godot-cache`) so it does not accumulate on the host bind mount.
+- **Compose management:** From the WSL host, use [`scripts/devcontainer.sh`](scripts/devcontainer.sh) (`rebuild`, `up`, `exec`, …). Godot functional tests run in the **`marloth`** service; `./scripts/devcontainer.sh functional-tests` (and the VS Code task) works when attached (runs locally) or from the WSL host (compose exec).
+- **Windows play:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) provides MinGW / Rust `windows-gnu` / .NET `win-x64` for cross-building a Windows play tree. From the WSL host:
 
   ```bash
-  docker compose -f .devcontainer/docker-compose.yml up -d marloth-win
-  docker compose -f .devcontainer/docker-compose.yml exec marloth-win ./scripts/build-windows.sh
+  ./scripts/devcontainer.sh up marloth-win
+  ./scripts/devcontainer.sh exec marloth-win ./scripts/build-windows.sh
   ```
 
   That syncs a playable tree to **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`), including Windows margen DLLs and C# `win-x64` assemblies. Open that folder in **Windows Godot 4.6 .NET**. Cursor stays attached to the **`marloth`** service, not `marloth-win`.

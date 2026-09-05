@@ -1,0 +1,26 @@
+---
+description: Fetch dependencies during container image build only; keep scripts and dev workflows offline-capable.
+alwaysApply: true
+---
+
+# Offline development (container-built downloads)
+
+Routine **build, test, and agent work** must not depend on reaching the public internet. Network use is reserved for **container image builds** (and Cursor itself).
+
+## Rules
+
+1. **Download in Dockerfiles / image build steps** — toolchains, Godot, Mesa ICDs, Rust bootstrap, NuGet restore at image build, `git submodule update` in `postCreateCommand` or image layers, etc.
+2. **Scripts and tasks must not `curl`/`wget`/download** at runtime to obtain tools or dependencies. Fail fast with a message to **rebuild the dev container** or the relevant compose service image.
+3. **No repo-local tool caches on the workspace mount** — do not download binaries or SDKs into the project tree (e.g. `.tools/`). Install them in container images (`/opt/...`) or other paths outside the bind-mounted repo.
+4. **Godot `.godot/` cache** — Godot always writes this beside `project.godot` (not relocatable). Compose services shadow `/workspaces/marloth/.godot` with the `marloth-godot-cache` volume so imports, shader cache, and editor state do not land on the host bind mount. Safe to delete the host copy if one exists; Godot regenerates it inside the container.
+5. **Godot functional tests** — run inside the **`marloth`** service. Prefer `./scripts/devcontainer.sh functional-tests` (or the VS Code task): when attached it runs [`scripts/run_godot_functional_tests.sh`](../../scripts/run_godot_functional_tests.sh) locally; from the WSL host it compose-execs into `marloth`.
+6. **Exception:** `cargo`/`dotnet restore` during normal edit-build cycles is acceptable only when it uses **pre-populated caches** from the image; do not add new runtime fetch paths when an image layer can carry the artifact instead.
+
+## Marloth services
+
+| Service | Role | Pre-installed examples |
+|---------|------|------------------------|
+| **`marloth`** | Primary dev container (Cursor attach) | Godot at `/opt/godot`, .NET SDK, Mesa dzn |
+| **`marloth-win`** | WSL host: Windows cross-build only | .NET SDK, MinGW, Rust |
+
+See [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile), [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross), [`scripts/devcontainer.sh`](../../scripts/devcontainer.sh), and [AGENTS.md](AGENTS.md).
