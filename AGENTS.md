@@ -3,14 +3,14 @@
 ## Project
 
 - **Engine**: Godot **4.6**, Forward Plus renderer, **Jolt** for 3D physics.
-- **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`). Until a real shell exists, that scene instances [`scenes/margen_world_debug.tscn`](scenes/margen_world_debug.tscn). PC file logging writes to `logs/marloth.log` (project- or exe-local; see `debug/file_logging` in `project.godot`).
-- **Name / assembly**: Application id is `marloth`; `project.godot` sets `[dotnet]` `project/assembly_name` for C# when used.
-- **C# modules**:
-  - **`Marloth.Core`** — engine-agnostic logic; see [`src/Marloth.Core/`](src/Marloth.Core/).
-  - **`Marloth.Client`** — Godot presentation and `GodotRpcHost`; see [`src/Marloth.Client/AGENTS.md`](src/Marloth.Client/AGENTS.md). Sources compile into the host assembly.
-  - **`Marloth.Automation`** — in-process Godot playbook helpers; see [`src/Marloth.Automation/AGENTS.md`](src/Marloth.Automation/AGENTS.md).
-  - **`Marloth.Automation.Contracts`** — gRPC/playbook contracts; see [`src/Marloth.Automation.Contracts/AGENTS.md`](src/Marloth.Automation.Contracts/AGENTS.md).
-  - Root [marloth.csproj](marloth.csproj) is the Godot host and **compiles Client scripts into the main assembly** (Godot only resolves C# scripts from that assembly).
+- **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`). Until a real shell exists, that scene instances [`scenes/margen_world_debug.tscn`](scenes/margen_world_debug.tscn) and hosts `MarlothSimHost`. PC file logging writes to `logs/marloth.log` (project- or exe-local; see `debug/file_logging` in `project.godot`).
+- **Languages**: **Rust** for authoritative simulation (`native/crates/marloth_sim`); **C++** for GDExtension glue; **GDScript** only when Godot is awkward without it. No C# / .NET.
+- **Native modules**: see [`native/AGENTS.md`](native/AGENTS.md).
+  - **`marloth_sim`** — engine-agnostic authoritative logic.
+  - **`marloth_ffi`** — C ABI (`native/include/marloth.h`).
+  - **`marloth_automation`** — in-process tonic playbook host.
+  - **`native/gdextension`** — `MarlothSimHost` (client sync) + `MarlothAutomationHost`.
+  - Loaded from [`addons/marloth/`](addons/marloth/).
 
 ## Layout
 
@@ -27,28 +27,28 @@
 ## Conventions
 
 - **Line endings:** Use **Unix (LF)** for all text in this repo. [`.gitattributes`](.gitattributes) enforces `eol=lf` on checkout/commit; [`.editorconfig`](.editorconfig) sets `end_of_line = lf`. The workspace and Dev Container set **`files.eol`** to `\n` in VS Code / Cursor so new files default to LF. If you create or edit files on Windows outside that setup, set the editor to LF (not CRLF) and avoid reintroducing `\r\n`; use `git add --renormalize .` if you need to fix a batch of files after changing `.gitattributes`.
-- Prefer changing game logic and scenes in this repo; keep Godot editor–managed files (`*.tscn`, `project.godot`) consistent with how Godot serializes them.
-- Match existing script language and style in the files you touch (GDScript vs C#).
+- Prefer changing game logic in `marloth_sim` and presentation in scenes / GDExtension; keep Godot editor–managed files (`*.tscn`, `project.godot`) consistent with how Godot serializes them.
+- Match existing script language and style in the files you touch (prefer Rust/C++ over GDScript).
 - **`docs/game/game-design.md` is locked:** Do **not** create, edit, or delete that file unless the **user explicitly instructed** changes to it in the current conversation. Put secondary design detail in [docs/game/features/](docs/game/features/) instead. Reading it is fine; proposing edits without that instruction is not. See [`.cursor/rules/game-design-lock.mdc`](.cursor/rules/game-design-lock.mdc).
 - **Bug regressions:** When fixing a user-reported bug the suite missed, add a regression test at the lowest sound layer—or escalate instead of brittle/flaky coverage. See [`.cursor/rules/bug-regression-tests.mdc`](.cursor/rules/bug-regression-tests.mdc) and [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md) (**Bug regressions / debugging**).
-- **Error handling:** Prefer explicit outcomes for expected failures; use exceptions only for truly exceptional cases or documented fail-fast abort boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
+- **Error handling:** Prefer explicit outcomes for expected failures; use panic/abort only for truly exceptional cases or documented fail-fast boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
 - **Plans:** Every Cursor plan must include a dedicated **Testing** section and a **Commit strategy** (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
 - **Offline dev:** Do not add runtime `curl`/`wget` download steps to scripts or tasks. Fetch tools and dependencies in **Dockerfiles** / image build only. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc).
-- **Native / margen:** Algorithms are Rust in the margen repo ([docs/rust-style.md](../margen/docs/rust-style.md)). Hosts consume the **C ABI**; margen-godot GDExtension sources remain C++ (godot-cpp).
+- **Native / margen:** Algorithms are Rust in the margen repo ([docs/rust-style.md](../margen/docs/rust-style.md)). Hosts consume the **C ABI**; margen-godot GDExtension sources remain C++ (godot-cpp). Marloth game authority is Rust under [`native/`](native/).
 
 ## Environment
 
-- The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
+- The **dev container** installs **Godot 4.6** (standard/non-.NET Linux preferred) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
 - **Offline policy:** Tool downloads happen in [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) and [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross) only — not in repo scripts. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc). Godot’s `.godot/` project cache is redirected to a compose volume (`marloth-godot-cache`) so it does not accumulate on the host bind mount.
-- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; Windows outputs use `./scripts/devcontainer.sh windows-dist` or `windows-project` (both build margen natives on **`marloth-win`** first).
+- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; Windows outputs use `./scripts/devcontainer.sh windows-dist` or `windows-project` (both build natives on **`marloth-win`** first).
 - **Windows outputs:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) holds cargo-xwin / clang-cl / Rust `windows-msvc`. It starts with the attach session via `runServices` and exposes an HTTP agent on `marloth-win:9876` (compose DNS only). Sibling dirs under **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`):
 
   | Command / task | Output | Use when |
   |---|---|---|
   | `windows-dist` (**Build Windows dist**; `windows-build` is an alias) | `$MARLOTH_WIN_OUT/dist/` (`marloth.exe` + data) | Run the packaged app on Windows — no Godot editor |
-  | `windows-project` (**Build Windows project**) | `$MARLOTH_WIN_OUT/project/` | Open the folder in **Windows Godot 4.6 .NET** |
+  | `windows-project` (**Build Windows project**) | `$MARLOTH_WIN_OUT/project/` | Open the folder in **Windows Godot 4.6** |
 
-  Both install Windows margen DLLs into workspace `addons/margen/bin/` via the agent. Dist uses Linux Godot (mono Windows templates) to export; project rsyncs sources and `dotnet publish -r win-x64`.
+  Both install Windows margen/marloth DLLs into workspace `addons/*/bin/` via the agent. Dist uses Linux Godot (Windows templates) to export; project rsyncs sources (no `dotnet publish`).
 - Do **not** spawn Windows Godot remotely from the Linux container (no HTTP launcher / remote client).
 - After Dockerfile changes: **Dev Containers → Rebuild and Reopen in Container**.
 

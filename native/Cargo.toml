@@ -1,0 +1,28 @@
+[workspace]
+resolver = "2"
+members = [
+	"crates/marloth_sim",
+	"crates/marloth_ffi",
+	"crates/marloth_automation",
+	"crates/marloth_automation_proto",
+]
+exclude = [
+	"../tests/functional/godot_driver",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+
+[workspace.dependencies]
+marloth_sim = { path = "crates/marloth_sim" }
+marloth_ffi = { path = "crates/marloth_ffi" }
+marloth_automation = { path = "crates/marloth_automation" }
+marloth_automation_proto = { path = "crates/marloth_automation_proto" }
+prost = "0.13"
+tonic = { version = "0.12", features = ["transport"] }
+tonic-build = "0.12"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"

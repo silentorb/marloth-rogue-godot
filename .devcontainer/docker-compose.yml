@@ -18,7 +18,7 @@ services:
       - /home/chris/dev/margen:/home/chris/dev/margen
       - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
     environment:
-      GODOT_BIN: /opt/godot/Godot_v4.6-stable_mono_linux.x86_64
+      GODOT_BIN: /opt/godot/Godot_v4.6-stable_linux.x86_64
       DISPLAY: ${DISPLAY:-}
       XDG_RUNTIME_DIR: /mnt/wslg/runtime-dir
       WAYLAND_DISPLAY: wayland-0

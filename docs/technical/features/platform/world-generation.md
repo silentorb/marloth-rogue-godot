@@ -2,7 +2,7 @@
 
 Marloth’s procedural worlds will come from the **margen** stack: engine-agnostic generation in **Rust**, **mythic** utility crates in the same repo, a **C ABI** (`margen_ffi` / `include/margen.h`), and a **margen-godot** GDExtension when Godot needs meshes and scenes. Legacy Unreal code remains **read-only reference** in the workspace—not a build dependency of the Godot game.
 
-For Marloth-specific glue (when generation is wired into scenes), prefer this repo’s game code (likely **C#** P/Invoke or the GDExtension) and docs; do not put algorithms in margen-godot.
+For Marloth-specific glue (when generation is wired into scenes), prefer this repo’s native game code (`marloth_sim` / GDExtension client role) and docs; do not put algorithms in margen-godot. The C ABI should prefer **bulk buffer** exports over chatty per-point getters when transferring mesh/face data.
 
 See also [Technical design](../../technical-design.md) for presentation vs logic boundaries.
 
@@ -33,7 +33,7 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement).
 
-**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). The entry scene [`main.tscn`](../../../../main.tscn) instances that debug world until a real shell exists (F5 / Windows dist boot). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows outputs, from the attached marloth container run `./scripts/devcontainer.sh windows-dist` (packaged app → `$MARLOTH_WIN_OUT/dist`) or `windows-project` (editor tree → `$MARLOTH_WIN_OUT/project`); default parent is `/mnt/e/dev/games/marloth-godot`. File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or dist dir.
+**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR) and **`margen_world_faces_bulk`** (contiguous points/uvs + face descriptors). **margen-godot** builds meshes via `MargenWorldMesh` using the bulk export; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). The entry scene [`main.tscn`](../../../../main.tscn) instances that debug world until a real shell exists (F5 / Windows dist boot). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows outputs, from the attached marloth container run `./scripts/devcontainer.sh windows-dist` (packaged app → `$MARLOTH_WIN_OUT/dist`) or `windows-project` (editor tree → `$MARLOTH_WIN_OUT/project`); default parent is `/mnt/e/dev/games/marloth-godot`. File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or dist dir.
 
 ### Debug scene contract (functional tests)
 

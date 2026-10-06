@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Orchestrate Windows margen natives (marloth-win) + dist export or project sync (marloth).
+# Orchestrate Windows GDExtension natives (margen + marloth via marloth-win)
+# + dist export or project sync (marloth).
 #
 # Usage: build-windows.sh [dist|project]
 #   dist (default): POST natives, then export-windows.sh → $MARLOTH_WIN_OUT/dist
@@ -10,7 +11,10 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WIN_ROOT="${MARLOTH_WIN_OUT:-/mnt/e/dev/games/marloth-godot}"
-GODOT_BIN="${GODOT_BIN:-/opt/godot/Godot_v4.6-stable_mono_linux.x86_64}"
+GODOT_BIN="${GODOT_BIN:-/opt/godot/Godot_v4.6-stable_linux.x86_64}"
+if [[ ! -x "${GODOT_BIN}" && -x /opt/godot/Godot_v4.6-stable_mono_linux.x86_64 ]]; then
+	GODOT_BIN=/opt/godot/Godot_v4.6-stable_mono_linux.x86_64
+fi
 MODE="${1:-dist}"
 
 # marloth-win has the MSVC/cargo-xwin toolchain but not the Godot editor.

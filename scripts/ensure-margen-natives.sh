@@ -22,7 +22,7 @@ ensure_extension_list() {
 		echo "Cannot write ${ROOT}/.godot (owned by $(stat -c '%U:%G' "${ROOT}/.godot" 2>/dev/null || echo unknown))." >&2
 		echo "The marloth-godot-cache volume must be writable by the container user." >&2
 		echo "Fix: sudo chown -R \"\$(id -u):\$(id -g)\" ${ROOT}/.godot" >&2
-		echo "Or from the WSL host: ./scripts/devcontainer.sh down --volumes && reopen the container." >&2
+		echo "Or: Dev Containers → Rebuild and Reopen in Container (after compose down --volumes if needed)." >&2
 		exit 1
 	fi
 	if [[ -f "${EXTENSION_LIST}" ]] && grep -qxF "${EXTENSION_RES}" "${EXTENSION_LIST}"; then

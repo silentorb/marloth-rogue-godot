@@ -17,7 +17,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 COMPOSE_FILE="${ROOT}/.devcontainer/docker-compose.yml"
 COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-devcontainer}"
 COMPOSE=(docker compose -p "${COMPOSE_PROJECT_NAME}" -f "${COMPOSE_FILE}")
-DEFAULT_GODOT_BIN="/opt/godot/Godot_v4.6-stable_mono_linux.x86_64"
+DEFAULT_GODOT_BIN="/opt/godot/Godot_v4.6-stable_linux.x86_64"
+FALLBACK_GODOT_BIN="/opt/godot/Godot_v4.6-stable_mono_linux.x86_64"
 MARLOTH_SERVICE=marloth
 WIN_SERVICE=marloth-win
 
@@ -198,7 +199,7 @@ cmd_shell() {
 }
 
 in_marloth_container() {
-	[[ -x "${DEFAULT_GODOT_BIN}" ]] && command -v dotnet >/dev/null 2>&1
+	{ [[ -x "${DEFAULT_GODOT_BIN}" ]] || [[ -x "${FALLBACK_GODOT_BIN}" ]]; } && command -v cargo >/dev/null 2>&1
 }
 
 win_agent_url() {
@@ -257,13 +258,14 @@ cmd_functional_tests() {
 	echo "Running Godot functional tests in ${MARLOTH_SERVICE} ..."
 	cmd_up "${MARLOTH_SERVICE}"
 
-	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" test -x "${DEFAULT_GODOT_BIN}" 2>/dev/null; then
-		echo "${MARLOTH_SERVICE} is missing ${DEFAULT_GODOT_BIN}." >&2
+	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" sh -c \
+		"test -x '${DEFAULT_GODOT_BIN}' || test -x '${FALLBACK_GODOT_BIN}'" 2>/dev/null; then
+		echo "${MARLOTH_SERVICE} is missing Godot at ${DEFAULT_GODOT_BIN}." >&2
 		echo "Rebuild: Dev Containers → Rebuild and Reopen in Container." >&2
 		exit 2
 	fi
-	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" sh -c 'command -v dotnet >/dev/null' 2>/dev/null; then
-		echo "${MARLOTH_SERVICE} is missing dotnet." >&2
+	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" sh -c 'command -v cargo >/dev/null' 2>/dev/null; then
+		echo "${MARLOTH_SERVICE} is missing cargo." >&2
 		echo "Rebuild: Dev Containers → Rebuild and Reopen in Container." >&2
 		exit 2
 	fi

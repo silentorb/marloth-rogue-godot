@@ -13,3 +13,11 @@
 
 # Local Godot file logs (keep logs/.gitkeep tracked)
 /logs/*.log
+
+# Native / Rust
+/native/target/
+/native/gdextension/build/
+/native/gdextension/build-windows/
+/native/gdextension/bin/
+/addons/marloth/bin/
+.cargo-home/

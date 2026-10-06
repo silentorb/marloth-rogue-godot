@@ -1,0 +1,16 @@
+[package]
+name = "marloth_godot_driver"
+version = "0.1.0"
+edition = "2021"
+description = "Headless Godot functional test driver (tonic client)"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[dependencies]
+marloth_automation_proto = { path = "../../../native/crates/marloth_automation_proto" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "process", "net"] }
+tonic = { version = "0.12", features = ["transport"] }
+
+[[test]]
+name = "playbooks"
+path = "tests/playbooks.rs"

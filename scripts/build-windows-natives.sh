@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Cross-compile Windows margen GDExtension natives into the workspace addons tree.
+# Cross-compile Windows GDExtension natives (margen + marloth) into workspace addons.
 # Intended to run inside marloth-win (HTTP build agent).
 set -euo pipefail
 
@@ -18,11 +18,15 @@ if [[ ! -d "${MARGEN_GODOT_ROOT}" ]]; then
 	exit 1
 fi
 
-# Isolate cargo output from the bind-mounted margen/target used by the marloth
+# Isolate cargo output from bind-mounted */target used by the marloth
 # (Debian newer glibc) session. Host build-scripts compiled there need GLIBC that
 # bookworm-based marloth-win cannot provide (e.g. GLIBC_2.39).
 export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-/var/cache/margen-cargo-target}"
 mkdir -p "${CARGO_TARGET_DIR}"
+
+# Writable cargo home for registry on marloth-win (image may lock /usr/local/cargo).
+export CARGO_HOME="${CARGO_HOME:-/var/cache/marloth-cargo-home}"
+mkdir -p "${CARGO_HOME}"
 
 echo "Building Windows margen natives (${BUILD_TYPE}) → ${ROOT}/addons/margen/bin ..."
 (
@@ -38,3 +42,12 @@ echo "Building Windows margen natives (${BUILD_TYPE}) → ${ROOT}/addons/margen/
 )
 
 echo "Windows margen natives installed under ${ROOT}/addons/margen/bin/"
+
+echo "Building Windows marloth natives (${BUILD_TYPE}) → ${ROOT}/addons/marloth/bin ..."
+(
+	cd "${ROOT}/native/gdextension"
+	TARGET=windows BUILD_TYPE="${BUILD_TYPE}" MARGEN_GODOT_ROOT="${MARGEN_GODOT_ROOT}" ./scripts/build.sh
+	PLATFORM=windows ./scripts/install-to-marloth.sh
+)
+
+echo "Windows marloth natives installed under ${ROOT}/addons/marloth/bin/"

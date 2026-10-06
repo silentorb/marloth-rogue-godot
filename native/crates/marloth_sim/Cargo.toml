@@ -1,0 +1,8 @@
+[package]
+name = "marloth_sim"
+version.workspace = true
+edition.workspace = true
+description = "Authoritative in-process game simulation for Marloth"
+license.workspace = true
+
+[dependencies]

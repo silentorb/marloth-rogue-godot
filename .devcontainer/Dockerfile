@@ -56,7 +56,7 @@ EOF
 # /opt/mesa-dzn and select it via VK_DRIVER_FILES (see devcontainer.json).
 # Godot is installed first (below) so headless functional tests work even if this step fails.
 ARG GODOT_VERSION=4.6-stable
-ARG GODOT_ZIP=Godot_v4.6-stable_mono_linux_x86_64.zip
+ARG GODOT_ZIP=Godot_v4.6-stable_linux.x86_64.zip
 RUN <<EOF
 set -euo pipefail
 tmpdir="$(mktemp -d)"
@@ -64,17 +64,18 @@ curl -fsSL -o "${tmpdir}/godot.zip" \
   "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}/${GODOT_ZIP}"
 unzip -q "${tmpdir}/godot.zip" -d "${tmpdir}"
 mkdir -p /opt/godot
-mv "${tmpdir}/Godot_v4.6-stable_mono_linux_x86_64"/* /opt/godot/
-chmod +x /opt/godot/Godot_v4.6-stable_mono_linux.x86_64
+# Standard (non-.NET) zip extracts a single binary.
+mv "${tmpdir}/Godot_v4.6-stable_linux.x86_64" /opt/godot/
+chmod +x /opt/godot/Godot_v4.6-stable_linux.x86_64
 rm -rf "${tmpdir}"
 EOF
 
-ENV GODOT_BIN=/opt/godot/Godot_v4.6-stable_mono_linux.x86_64
+ENV GODOT_BIN=/opt/godot/Godot_v4.6-stable_linux.x86_64
 
-# Mono export templates (Windows only extracted) for headless Windows Desktop exports.
+# Standard export templates (Windows only extracted) for headless Windows Desktop exports.
 # Full tpz is multi-platform; keep only windows_* + version.txt to limit image size.
 ARG GODOT_VERSION
-ARG GODOT_EXPORT_TEMPLATES_TPZ=Godot_v4.6-stable_mono_export_templates.tpz
+ARG GODOT_EXPORT_TEMPLATES_TPZ=Godot_v4.6-stable_export_templates.tpz
 RUN <<EOF
 set -euo pipefail
 tmpdir="$(mktemp -d)"
@@ -83,7 +84,7 @@ curl -fsSL -o "${tmpdir}/templates.tpz" \
 unzip -q "${tmpdir}/templates.tpz" -d "${tmpdir}/extracted"
 templates_src="${tmpdir}/extracted/templates"
 test -f "${templates_src}/version.txt"
-dest=/home/vscode/.local/share/godot/export_templates/4.6.stable.mono
+dest=/home/vscode/.local/share/godot/export_templates/4.6.stable
 mkdir -p "${dest}"
 cp "${templates_src}/version.txt" "${dest}/"
 # Windows Desktop (x86_64) debug/release + console wrappers used by the exporter.
@@ -104,17 +105,6 @@ test -f "${dest}/windows_release_x86_64.exe"
 chown -R vscode:vscode /home/vscode/.local/share/godot
 rm -rf "${tmpdir}"
 EOF
-
-# .NET SDK 8 — Godot functional tests and C# builds (devcontainer.json also installs via feature on attach).
-RUN <<EOF
-set -euo pipefail
-curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/dotnet-install.sh
-bash /tmp/dotnet-install.sh --channel 8.0 --install-dir /usr/share/dotnet
-ln -sf /usr/share/dotnet/dotnet /usr/local/bin/dotnet
-rm /tmp/dotnet-install.sh
-EOF
-ENV DOTNET_ROOT=/usr/share/dotnet
-ENV PATH="/usr/share/dotnet:${PATH}"
 
 # Pin to a still-published Kisak pool artifact (old point releases are removed).
 # Prefer Noble (~n) over Resolute (~r); bump when rebuilding if this 404s again.

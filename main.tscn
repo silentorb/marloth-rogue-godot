@@ -2,6 +2,9 @@
 
 [ext_resource type="PackedScene" uid="uid://bqmargenworlddebug" path="res://scenes/margen_world_debug.tscn" id="1_margen"]
 
-[node name="Root" type="Node" unique_id=909549785]
+[node name="Root" type="Node"]
 
 [node name="MargenWorldDebug" parent="." instance=ExtResource("1_margen")]
+
+[node name="MarlothSimHost" type="MarlothSimHost" parent="."]
+auto_tick = true

@@ -23,7 +23,7 @@ Entry points:
 
 - [game/game-design.md](game/game-design.md) — vision and primary pillars (locked; do not edit without explicit user instruction)
 - [game/features/README.md](game/features/README.md) — game **features index** (secondary design / player-facing rules)
-- [technical/technical-design.md](technical/technical-design.md) — architecture, C#, TDD, presentation vs logic, Godot layout
+- [technical/technical-design.md](technical/technical-design.md) — architecture, Rust authority, TDD, presentation vs logic, Godot layout
 - [technical/features/README.md](technical/features/README.md) — technical **features index** (contracts / implementation)
 
 [game/scoping/](game/scoping/) is for human brainstorming; it is not intended for AI agents.

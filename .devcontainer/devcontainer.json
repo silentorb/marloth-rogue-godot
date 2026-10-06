@@ -4,12 +4,7 @@
     "service": "marloth",
     "runServices": ["marloth-win"],
     "workspaceFolder": "/workspaces/marloth",
-    "features": {
-        "ghcr.io/devcontainers/features/dotnet:2": {
-            "version": "8.0",
-            "dotnetRuntimeVersions": "8.0"
-        }
-    },
+    "features": {},
     // Same absolute targets as marloth.code-workspace so multi-root folders survive
     // "Reopen in Container". minimap / unreal-marloth / unreal-marloth-plugins are
     // reference-only (readonly); margen and margen-godot are read-write.
@@ -25,7 +20,7 @@
         "source=/home/chris/dev/margen-godot,target=/home/chris/dev/margen-godot,type=bind"
     ],
     "containerEnv": {
-        "GODOT_BIN": "/opt/godot/Godot_v4.6-stable_mono_linux.x86_64",
+        "GODOT_BIN": "/opt/godot/Godot_v4.6-stable_linux.x86_64",
         "DISPLAY": "${localEnv:DISPLAY}",
         "XDG_RUNTIME_DIR": "/mnt/wslg/runtime-dir",
         "WAYLAND_DISPLAY": "wayland-0",

@@ -1,0 +1,12 @@
+[package]
+name = "marloth_automation"
+version.workspace = true
+edition.workspace = true
+description = "In-process Godot automation host (tonic) and built-in playbooks"
+license.workspace = true
+
+[dependencies]
+marloth_automation_proto = { workspace = true }
+tokio = { workspace = true }
+tonic = { workspace = true }
+serde_json = { workspace = true }
