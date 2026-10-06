@@ -4,9 +4,9 @@
         {
             "label": "Run Godot functional tests",
             "type": "shell",
-            "command": "./scripts/run_godot_functional_tests.sh",
+            "command": "./scripts/devcontainer.sh functional-tests",
             "options": {
-                "cwd": "${workspaceFolder}"
+                "cwd": "${workspaceFolder:marloth}"
             },
             "group": "test",
             "presentation": {
@@ -19,9 +19,9 @@
         {
             "label": "Launch Godot editor",
             "type": "shell",
-            "command": "\"$GODOT_BIN\" --path \"${workspaceFolder}\" --editor --rendering-driver vulkan --rendering-method forward_plus --single-window",
+            "command": "\"$GODOT_BIN\" --path \"${workspaceFolder:marloth}\" --editor --rendering-driver vulkan --rendering-method forward_plus --single-window",
             "options": {
-                "cwd": "${workspaceFolder}",
+                "cwd": "${workspaceFolder:marloth}",
                 "env": {
                     "LD_LIBRARY_PATH": "/usr/lib/wsl/lib:/opt/mesa-dzn/lib",
                     "VK_DRIVER_FILES": "/opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json",
@@ -43,11 +43,26 @@
             }
         },
         {
-            "label": "Build Windows play tree",
+            "label": "Build Windows dist",
             "type": "shell",
-            "command": "docker compose -f \"${workspaceFolder}/.devcontainer/docker-compose.yml\" up -d marloth-win && docker compose -f \"${workspaceFolder}/.devcontainer/docker-compose.yml\" exec -T marloth-win ./scripts/build-windows.sh",
+            "command": "./scripts/devcontainer.sh windows-dist",
             "options": {
-                "cwd": "${workspaceFolder}/.devcontainer"
+                "cwd": "${workspaceFolder:marloth}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": false
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Windows project",
+            "type": "shell",
+            "command": "./scripts/devcontainer.sh windows-project",
+            "options": {
+                "cwd": "${workspaceFolder:marloth}"
             },
             "group": "build",
             "presentation": {

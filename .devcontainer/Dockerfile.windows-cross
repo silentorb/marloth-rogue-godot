@@ -1,35 +1,67 @@
-# Lean Windows cross-compile image for Marloth C# + margen/margen-godot MinGW natives.
-# No Godot, Mesa, or WSLg — keep toolchains separate from the Linux marloth service.
+# Lean Windows cross-compile image for Marloth C# + margen/margen-godot MSVC natives.
+# Tool downloads (Rust, cargo-xwin, xwin CRT/SDK, Clang 19) happen only in this image build.
+# If /opt/cargo-xwin/xwin is missing at runtime, rebuild marloth-win — do not download here.
 FROM mcr.microsoft.com/dotnet/sdk:8.0-bookworm-slim
+
+# Clang 19+ is required by current MSVC STL headers from xwin (STL1000).
+# Bookworm's default clang is 14; install from apt.llvm.org at image build only.
+ARG LLVM_VERSION=19
 
 RUN apt-get update \
 	&& apt-get install -y --no-install-recommends \
 		build-essential \
 		ca-certificates \
-		curl \
 		cmake \
-		g++-mingw-w64-x86-64 \
+		curl \
+		gnupg \
 		git \
 		ninja-build \
 		python3 \
 		rsync \
-	&& rm -rf /var/lib/apt/lists/* \
-	&& update-alternatives --set x86_64-w64-mingw32-g++ /usr/bin/x86_64-w64-mingw32-g++-posix \
-	&& update-alternatives --set x86_64-w64-mingw32-gcc /usr/bin/x86_64-w64-mingw32-gcc-posix
+		wget \
+	&& wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key \
+		| gpg --dearmor -o /usr/share/keyrings/llvm-toolchain.gpg \
+	&& echo "deb [signed-by=/usr/share/keyrings/llvm-toolchain.gpg] https://apt.llvm.org/bookworm/ llvm-toolchain-bookworm-${LLVM_VERSION} main" \
+		> /etc/apt/sources.list.d/llvm-toolchain.list \
+	&& apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		clang-${LLVM_VERSION} \
+		lld-${LLVM_VERSION} \
+		llvm-${LLVM_VERSION} \
+	&& update-alternatives --install /usr/bin/clang clang /usr/bin/clang-${LLVM_VERSION} 100 \
+	&& update-alternatives --install /usr/bin/clang++ clang++ /usr/bin/clang++-${LLVM_VERSION} 100 \
+	&& update-alternatives --install /usr/bin/lld lld /usr/bin/lld-${LLVM_VERSION} 100 \
+	&& ln -sf /usr/bin/llvm-ar-${LLVM_VERSION} /usr/bin/llvm-ar \
+	&& ln -sf /usr/bin/llvm-rc-${LLVM_VERSION} /usr/bin/llvm-rc \
+	&& rm -rf /var/lib/apt/lists/*
 
-# Rust stable + Windows GNU target (matches MinGW GDExtension ABI).
+# Rust stable + Windows MSVC target (matches clang-cl / cargo-xwin GDExtension ABI).
+# cargo-xwin stores the splat under ${XWIN_CACHE_DIR}/xwin/{crt,sdk}; helper symlinks live in ${XWIN_CACHE_DIR}.
+# CARGO_TARGET_DIR stays inside the image/volume — not the bind-mounted margen/target —
+# so host build-scripts are not reused from the newer-glibc marloth container.
 ENV RUSTUP_HOME=/usr/local/rustup \
 	CARGO_HOME=/usr/local/cargo \
-	PATH=/usr/local/cargo/bin:$PATH \
-	CARGO_TARGET_X86_64_PC_WINDOWS_GNU_LINKER=x86_64-w64-mingw32-gcc
+	XWIN_CACHE_DIR=/opt/cargo-xwin \
+	XWIN_ARCH=x86_64 \
+	CARGO_TARGET_DIR=/var/cache/margen-cargo-target \
+	PATH=/opt/cargo-xwin:/usr/local/cargo/bin:$PATH
 
-RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
-	&& rustup target add x86_64-pc-windows-gnu \
-	&& mkdir -p /usr/local/cargo \
-	&& printf '%s\n' \
-		'[target.x86_64-pc-windows-gnu]' \
-		'linker = "x86_64-w64-mingw32-gcc"' \
-		> /usr/local/cargo/config.toml \
+# Pin cargo-xwin for reproducible image builds (bump deliberately when upgrading).
+ARG CARGO_XWIN_VERSION=0.23.1
+
+RUN mkdir -p /var/cache/margen-cargo-target \
+	&& curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable \
+	&& rustup target add x86_64-pc-windows-msvc \
+	&& rustup component add llvm-tools \
+	&& cargo install --locked cargo-xwin --version "${CARGO_XWIN_VERSION}" \
+	&& mkdir -p /opt/cargo-xwin \
+	&& ln -sf "$(command -v clang)" /opt/cargo-xwin/clang-cl \
+	&& ln -sf "$(rustc --print sysroot)/lib/rustlib/x86_64-unknown-linux-gnu/bin/rust-lld" /opt/cargo-xwin/lld-link \
+	&& ln -sf "$(command -v llvm-ar)" /opt/cargo-xwin/llvm-lib \
+	&& ln -sf "$(command -v llvm-ar)" /opt/cargo-xwin/llvm-dlltool \
+	&& cargo xwin cache xwin --xwin-cache-dir "${XWIN_CACHE_DIR}" \
+	&& test -d "${XWIN_CACHE_DIR}/xwin/crt" \
+	&& test -d "${XWIN_CACHE_DIR}/xwin/sdk" \
 	&& git config --system --add safe.directory '*'
 
 WORKDIR /workspaces/marloth

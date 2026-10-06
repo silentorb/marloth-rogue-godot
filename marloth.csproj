@@ -1,4 +1,4 @@
-<Project Sdk="Godot.NET.Sdk/4.6.1">
+<Project Sdk="Godot.NET.Sdk/4.6.0">
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <EnableDynamicLoading>true</EnableDynamicLoading>
@@ -17,6 +17,8 @@
     <ProjectReference Include="src/Marloth.Automation/Marloth.Automation.csproj" />
     <ProjectReference Include="src/Marloth.Automation.Contracts/Marloth.Automation.Contracts.csproj" />
     <PackageReference Include="Grpc.Core" Version="2.46.6" />
+    <!-- Pin above Godot.NET.Sdk/4.6.0 default so Marloth.Automation's GodotSharp 4.6.1 does not NU1605. -->
+    <PackageReference Include="GodotSharp" Version="4.6.1" />
   </ItemGroup>
   <!-- Godot.NET.Sdk globs all *.cs under the project root; keep only Client script sources. -->
   <ItemGroup>

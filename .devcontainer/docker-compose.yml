@@ -5,11 +5,15 @@ services:
       dockerfile: Dockerfile
     volumes:
       - ..:/workspaces/marloth:cached
+      # Godot requires .godot beside project.godot; shadow the bind mount so cache stays off the host tree.
+      - marloth-godot-cache:/workspaces/marloth/.godot
       - /tmp/.X11-unix:/tmp/.X11-unix
       - /mnt/wslg:/mnt/wslg
       - /usr/lib/wsl:/usr/lib/wsl:ro
       - /mnt/e/dev/games/marloth/Source:/mnt/e/dev/games/marloth/Source:ro
       - /mnt/e/dev/games/marloth/Plugins:/mnt/e/dev/games/marloth/Plugins:ro
+      # Windows Desktop export output (Godot --export-* from marloth).
+      - /mnt/e/dev/games/marloth-godot:/mnt/e/dev/games/marloth-godot
       - /home/chris/dev/minimap:/home/chris/dev/minimap:ro
       - /home/chris/dev/margen:/home/chris/dev/margen
       - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
@@ -23,6 +27,11 @@ services:
       VK_DRIVER_FILES: /opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json
       VK_ICD_FILENAMES: /opt/mesa-dzn/share/vulkan/icd.d/dzn_icd.json
       GALLIUM_DRIVER: d3d12
+      MARLOTH_WIN_OUT: /mnt/e/dev/games/marloth-godot
+      MARLOTH_WIN_AGENT_HOST: marloth-win
+      MARLOTH_WIN_AGENT_PORT: "9876"
+      MARGEN_ROOT: /home/chris/dev/margen
+      MARGEN_GODOT_ROOT: /home/chris/dev/margen-godot
     devices:
       - /dev/dxg
     command: sleep infinity
@@ -38,20 +47,31 @@ services:
     working_dir: /workspaces/margen
     command: sleep infinity
 
-  # Windows cross-compile only (MinGW + Rust windows-gnu + .NET win-x64).
-  # Not the Cursor attach target — use: docker compose exec marloth-win ./scripts/build-windows.sh
+  # Windows cross-compile (cargo-xwin / clang-cl / windows-msvc). Natives only;
+  # Godot Windows Desktop export runs on the marloth service.
+  # Not the Cursor attach target — started via runServices; builds via HTTP agent on :9876.
   marloth-win:
     build:
       context: .
       dockerfile: Dockerfile.windows-cross
     volumes:
       - ..:/workspaces/marloth:cached
+      - marloth-godot-cache:/workspaces/marloth/.godot
+      - marloth-win-cargo-target:/var/cache/margen-cargo-target
       - /home/chris/dev/margen:/home/chris/dev/margen
       - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
       - /mnt/e/dev/games/marloth-godot:/mnt/e/dev/games/marloth-godot
     environment:
       MARLOTH_WIN_OUT: /mnt/e/dev/games/marloth-godot
+      MARLOTH_WIN_AGENT_PORT: "9876"
       MARGEN_ROOT: /home/chris/dev/margen
       MARGEN_GODOT_ROOT: /home/chris/dev/margen-godot
+      # Keep cargo artifacts off the shared margen/target (glibc differs from marloth).
+      CARGO_TARGET_DIR: /var/cache/margen-cargo-target
     working_dir: /workspaces/marloth
-    command: sleep infinity
+    # Agent only on the compose network (no host port publish).
+    command: ["./scripts/windows-build-agent.sh"]
+
+volumes:
+  marloth-godot-cache:
+  marloth-win-cargo-target:

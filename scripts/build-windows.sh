@@ -1,77 +1,92 @@
 #!/usr/bin/env bash
-# Sync Marloth to a Windows play tree and cross-compile C# + margen natives.
-# Intended to run inside the marloth-win compose service.
+# Orchestrate Windows margen natives (marloth-win) + dist export or project sync (marloth).
+#
+# Usage: build-windows.sh [dist|project]
+#   dist (default): POST natives, then export-windows.sh → $MARLOTH_WIN_OUT/dist
+#   project:        POST natives, then sync-windows-project.sh → $MARLOTH_WIN_OUT/project
+#
+# On marloth-win (no Godot): natives only (also the HTTP agent entrypoint).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-OUT="${MARLOTH_WIN_OUT:-/mnt/e/dev/games/marloth-godot}"
-MARGEN_ROOT="${MARGEN_ROOT:-/home/chris/dev/margen}"
-MARGEN_GODOT_ROOT="${MARGEN_GODOT_ROOT:-/home/chris/dev/margen-godot}"
-BUILD_TYPE="${BUILD_TYPE:-Debug}"
-CONFIGURATION="${CONFIGURATION:-Debug}"
+WIN_ROOT="${MARLOTH_WIN_OUT:-/mnt/e/dev/games/marloth-godot}"
+GODOT_BIN="${GODOT_BIN:-/opt/godot/Godot_v4.6-stable_mono_linux.x86_64}"
+MODE="${1:-dist}"
 
-if [[ -z "${OUT}" ]]; then
+# marloth-win has the MSVC/cargo-xwin toolchain but not the Godot editor.
+if [[ ! -x "${GODOT_BIN}" ]]; then
+	exec "${ROOT}/scripts/build-windows-natives.sh"
+fi
+
+case "${MODE}" in
+dist|project) ;;
+*)
+	echo "Usage: $0 [dist|project]" >&2
+	exit 2
+	;;
+esac
+
+if [[ -z "${WIN_ROOT}" ]]; then
 	echo "MARLOTH_WIN_OUT is unset." >&2
 	exit 1
 fi
 
-if [[ ! -d "$(dirname "${OUT}")" ]]; then
-	echo "Parent of MARLOTH_WIN_OUT is missing or unmounted: $(dirname "${OUT}")" >&2
+if [[ ! -d "$(dirname "${WIN_ROOT}")" ]]; then
+	echo "Parent of MARLOTH_WIN_OUT is missing or unmounted: $(dirname "${WIN_ROOT}")" >&2
 	exit 1
 fi
 
-if [[ ! -d "${MARGEN_ROOT}" ]]; then
-	echo "MARGEN_ROOT not found: ${MARGEN_ROOT}" >&2
-	exit 1
+base="http://${MARLOTH_WIN_AGENT_HOST:-marloth-win}:${MARLOTH_WIN_AGENT_PORT:-9876}"
+if ! command -v curl >/dev/null 2>&1; then
+	echo "curl is required to call the marloth-win build agent." >&2
+	exit 2
+fi
+if ! curl -sfS --connect-timeout 2 --max-time 5 "${base}/health" >/dev/null; then
+	echo "marloth-win build agent is not reachable at ${base}." >&2
+	echo "Ensure marloth-win is running (devcontainer.json runServices) and Rebuild/Reopen the container." >&2
+	exit 2
 fi
 
-if [[ ! -d "${MARGEN_GODOT_ROOT}" ]]; then
-	echo "MARGEN_GODOT_ROOT not found: ${MARGEN_GODOT_ROOT}" >&2
+echo "Triggering Windows natives build via ${base}/build ..."
+http_code="$(
+	curl -sS -X POST \
+		--connect-timeout 5 \
+		--max-time 3600 \
+		-w "\n%{http_code}" \
+		"${base}/build"
+)"
+body="$(printf '%s' "${http_code}" | sed '$d')"
+status="$(printf '%s' "${http_code}" | tail -n1)"
+printf '%s\n' "${body}"
+case "${status}" in
+200) ;;
+409)
+	echo "Windows natives build already in progress on marloth-win." >&2
 	exit 1
+	;;
+*)
+	echo "marloth-win build agent returned HTTP ${status}." >&2
+	exit 1
+	;;
+esac
+
+if [[ "${MODE}" == "project" ]]; then
+	"${ROOT}/scripts/sync-windows-project.sh"
+	exit 0
 fi
 
-mkdir -p "${OUT}"
+"${ROOT}/scripts/export-windows.sh"
 
-echo "Syncing marloth → ${OUT} ..."
-rsync -a --delete \
-	--exclude '.git/' \
-	--exclude '.godot/' \
-	--exclude '.vs/' \
-	--exclude 'bin/' \
-	--exclude 'obj/' \
-	--exclude '**/bin/' \
-	--exclude '**/obj/' \
-	--exclude 'addons/margen/bin/*.so' \
-	--exclude 'addons/margen/bin/*.dll' \
-	--exclude '.devcontainer/' \
-	--exclude 'tests/' \
-	"${ROOT}/" "${OUT}/"
-
-echo "Building Windows margen natives (${BUILD_TYPE})..."
-(
-	cd "${MARGEN_GODOT_ROOT}"
-	# Bind mounts often differ in UID from the container user.
-	git config --global --add safe.directory "${MARGEN_GODOT_ROOT}" || true
-	git config --global --add safe.directory "${MARGEN_ROOT}" || true
-	if [[ -d "${MARGEN_GODOT_ROOT}/.git" ]] || [[ -f "${MARGEN_GODOT_ROOT}/.git" ]]; then
-		git submodule update --init --recursive
+DIST_DIR="${WIN_ROOT}/dist"
+VERIFY_SCRIPT="${ROOT}/scripts/verify-margen-windows.sh"
+if [[ -x "${VERIFY_SCRIPT}" ]]; then
+	echo
+	echo "Running margen Windows dist audit..."
+	if ! "${VERIFY_SCRIPT}" "${DIST_DIR}"; then
+		if [[ "${VERIFY_MARGEN_STRICT:-0}" == "1" ]]; then
+			echo "verify-margen-windows.sh failed (VERIFY_MARGEN_STRICT=1)." >&2
+			exit 1
+		fi
+		echo "verify-margen-windows.sh reported FAIL (non-strict; dist still succeeded)." >&2
 	fi
-	TARGET=windows BUILD_TYPE="${BUILD_TYPE}" MARGEN_ROOT="${MARGEN_ROOT}" ./scripts/build.sh
-	PLATFORM=windows MARLOTH_ROOT="${OUT}" ./scripts/install-to-marloth.sh
-)
-
-MONO_OUT="${OUT}/.godot/mono/temp/bin/${CONFIGURATION}"
-mkdir -p "${MONO_OUT}"
-
-echo "Publishing C# win-x64 → ${MONO_OUT} ..."
-dotnet publish "${ROOT}/marloth.csproj" \
-	-c "${CONFIGURATION}" \
-	-r win-x64 \
-	--self-contained false \
-	-p:GodotTargetPlatform=windows \
-	-o "${MONO_OUT}"
-
-echo
-echo "Windows play tree ready: ${OUT}"
-echo "Open that folder in Windows Godot 4.6 .NET (e.g. E:\\dev\\games\\marloth-godot)."
-echo "Do not launch Windows Godot from this Linux container."
+fi

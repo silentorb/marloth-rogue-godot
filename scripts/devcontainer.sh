@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
-# Manage marloth devcontainer compose services (WSL host) and dual-mode helpers.
+# Dual-mode helpers for the attached marloth container (and optional compose mgmt).
 #
-# Run from the marloth repo root (works with marloth.code-workspace — no need to
-# cd into .devcontainer). Compose commands (build/rebuild/up/down/ps/logs/exec/
-# shell) need Docker on the WSL host. functional-tests runs locally when already
-# attached to the marloth container; otherwise it compose-execs into marloth.
+# Prefer running tasks while attached (Cursor Dev Containers).
+# - functional-tests: runs locally when attached
+# - windows-dist / windows-project: marloth-win natives + dist export or project sync
+# - windows-build: alias of windows-dist
 #
 # Examples:
-#   ./scripts/devcontainer.sh rebuild              # marloth + marloth-win images, recreate
-#   ./scripts/devcontainer.sh rebuild marloth-win  # Windows cross-build image only
-#   ./scripts/devcontainer.sh up marloth-win
-#   ./scripts/devcontainer.sh exec marloth-win ./scripts/build-windows.sh
-#   ./scripts/devcontainer.sh logs -f marloth-win
-#   ./scripts/devcontainer.sh functional-tests     # attached or from WSL host
+#   ./scripts/devcontainer.sh functional-tests
+#   ./scripts/devcontainer.sh windows-dist
+#   ./scripts/devcontainer.sh windows-project
+#   ./scripts/devcontainer.sh rebuild   # needs docker; prefer Dev Containers → Rebuild
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -21,6 +19,7 @@ COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-devcontainer}"
 COMPOSE=(docker compose -p "${COMPOSE_PROJECT_NAME}" -f "${COMPOSE_FILE}")
 DEFAULT_GODOT_BIN="/opt/godot/Godot_v4.6-stable_mono_linux.x86_64"
 MARLOTH_SERVICE=marloth
+WIN_SERVICE=marloth-win
 
 DEFAULT_SERVICES=(marloth marloth-win)
 ALL_SERVICES=(marloth marloth-win margen)
@@ -31,21 +30,26 @@ Usage: $(basename "$0") <command> [options] [services...]
 
 Commands:
   build [--no-cache] [services...]   Build images (default: marloth marloth-win)
-  rebuild [--no-cache] [services...] Build images and recreate containers (up -d --force-recreate)
+  rebuild [--no-cache] [services...] Build images and recreate containers
   up [services...]                   Start services in the background
   down [--volumes]                   Stop all compose services (optional: remove volumes)
   ps                                 Show service status
   logs [-f] <service>                Tail service logs (-f to follow)
   exec <service> <command...>        Run a command in a running service
-  functional-tests [args...]         Run Godot playbooks (attached or via marloth service)
-  shell [service]                    Open bash in a service (default: marloth-win)
+  functional-tests [args...]         Run Godot playbooks (attached, or via marloth)
+  windows-dist                       Packaged Windows app → \$MARLOTH_WIN_OUT/dist
+  windows-project                    Editor play tree → \$MARLOTH_WIN_OUT/project
+  windows-build                      Alias of windows-dist
+  shell [service]                    Open bash in a service (default: marloth)
 
 Services: marloth, marloth-win, margen, or all
 
 Notes:
-  - Godot functional tests: ./scripts/devcontainer.sh functional-tests (or the VS Code task);
-    works when attached and from the WSL host.
-  - After rebuilding marloth, use Cursor: Dev Containers → Rebuild and Reopen in Container.
+  - functional-tests / windows-dist / windows-project work when attached. Prefer the VS Code tasks.
+  - windows-dist: POST natives to marloth-win, then Godot export into dist/.
+  - windows-project: POST natives, then rsync + win-x64 publish into project/.
+  - After Dockerfile changes: Dev Containers → Rebuild and Reopen in Container
+    (devcontainer.json runServices starts marloth-win with the attach session).
   - down --volumes removes marloth-godot-cache (Godot import/shader cache).
 EOF
 }
@@ -53,7 +57,8 @@ EOF
 require_docker() {
 	if ! command -v docker >/dev/null 2>&1; then
 		echo "docker is not on PATH." >&2
-		echo "Run this script from the WSL host, not from inside an attached dev container." >&2
+		echo "This compose command needs Docker. Prefer Cursor: Dev Containers → Rebuild Container." >&2
+		echo "For playbooks / Windows outputs, use: $(basename "$0") functional-tests | windows-dist | windows-project" >&2
 		exit 1
 	fi
 	if [[ ! -f "${COMPOSE_FILE}" ]]; then
@@ -188,12 +193,59 @@ cmd_exec() {
 }
 
 cmd_shell() {
-	local service="${1:-marloth-win}"
+	local service="${1:-marloth}"
 	"${COMPOSE[@]}" exec "${service}" bash
 }
 
 in_marloth_container() {
 	[[ -x "${DEFAULT_GODOT_BIN}" ]] && command -v dotnet >/dev/null 2>&1
+}
+
+win_agent_url() {
+	local host="${MARLOTH_WIN_AGENT_HOST:-marloth-win}"
+	local port="${MARLOTH_WIN_AGENT_PORT:-9876}"
+	echo "http://${host}:${port}"
+}
+
+call_windows_build_agent() {
+	local base
+	base="$(win_agent_url)"
+	if ! command -v curl >/dev/null 2>&1; then
+		echo "curl is required to call the marloth-win build agent." >&2
+		return 2
+	fi
+
+	if ! curl -sfS --connect-timeout 2 --max-time 5 "${base}/health" >/dev/null; then
+		echo "marloth-win build agent is not reachable at ${base}." >&2
+		echo "Ensure marloth-win is running (devcontainer.json runServices) and Rebuild/Reopen the container." >&2
+		return 2
+	fi
+
+	echo "Triggering Windows natives build via ${base}/build ..."
+	# Stream response body to stdout; HTTP status reflects build exit (200/500) or 409 busy.
+	local http_code
+	http_code="$(
+		curl -sS -X POST \
+			--connect-timeout 5 \
+			--max-time 3600 \
+			-w "\n%{http_code}" \
+			"${base}/build"
+	)"
+	local body status
+	body="$(printf '%s' "${http_code}" | sed '$d')"
+	status="$(printf '%s' "${http_code}" | tail -n1)"
+	printf '%s\n' "${body}"
+	case "${status}" in
+	200) return 0 ;;
+	409)
+		echo "Windows natives build already in progress on marloth-win." >&2
+		return 1
+		;;
+	*)
+		echo "marloth-win build agent returned HTTP ${status}." >&2
+		return 1
+		;;
+	esac
 }
 
 cmd_functional_tests() {
@@ -207,17 +259,55 @@ cmd_functional_tests() {
 
 	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" test -x "${DEFAULT_GODOT_BIN}" 2>/dev/null; then
 		echo "${MARLOTH_SERVICE} is missing ${DEFAULT_GODOT_BIN}." >&2
-		echo "Rebuild: $(basename "$0") rebuild ${MARLOTH_SERVICE}" >&2
+		echo "Rebuild: Dev Containers → Rebuild and Reopen in Container." >&2
 		exit 2
 	fi
 	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" sh -c 'command -v dotnet >/dev/null' 2>/dev/null; then
 		echo "${MARLOTH_SERVICE} is missing dotnet." >&2
-		echo "Rebuild: $(basename "$0") rebuild ${MARLOTH_SERVICE}" >&2
+		echo "Rebuild: Dev Containers → Rebuild and Reopen in Container." >&2
 		exit 2
 	fi
 
 	cmd_exec "${MARLOTH_SERVICE}" bash -lc \
 		"cd /workspaces/marloth && ./scripts/run_godot_functional_tests.sh $(printf '%q ' "$@")"
+}
+
+cmd_windows_build() {
+	local mode="${1:-dist}"
+	shift || true
+	if [[ $# -gt 0 ]]; then
+		echo "windows-${mode} does not take extra arguments." >&2
+		exit 2
+	fi
+	case "${mode}" in
+	dist|project) ;;
+	*)
+		echo "Unknown Windows mode: ${mode} (expected dist or project)." >&2
+		exit 2
+		;;
+	esac
+
+	if in_marloth_container; then
+		exec "${ROOT}/scripts/build-windows.sh" "${mode}"
+	fi
+
+	# Outside attach: ensure both services, then orchestrate on marloth (natives agent + mode).
+	require_docker
+	echo "Ensuring ${MARLOTH_SERVICE} and ${WIN_SERVICE} are up ..."
+	cmd_up "${MARLOTH_SERVICE}" "${WIN_SERVICE}"
+	local i
+	for i in 1 2 3 4 5 6 7 8 9 10; do
+		if "${COMPOSE[@]}" exec -T "${WIN_SERVICE}" curl -sfS --connect-timeout 1 "http://127.0.0.1:${MARLOTH_WIN_AGENT_PORT:-9876}/health" >/dev/null 2>&1; then
+			break
+		fi
+		sleep 1
+	done
+	if ! "${COMPOSE[@]}" exec -T "${MARLOTH_SERVICE}" test -x "${DEFAULT_GODOT_BIN}" 2>/dev/null; then
+		echo "${MARLOTH_SERVICE} is missing ${DEFAULT_GODOT_BIN}." >&2
+		echo "Rebuild: Dev Containers → Rebuild and Reopen in Container." >&2
+		exit 2
+	fi
+	cmd_exec "${MARLOTH_SERVICE}" bash -lc "cd /workspaces/marloth && ./scripts/build-windows.sh $(printf '%q' "${mode}")"
 }
 
 main() {
@@ -232,6 +322,12 @@ main() {
 	case "${command}" in
 	functional-tests)
 		cmd_functional_tests "$@"
+		;;
+	windows-dist | windows-build)
+		cmd_windows_build dist "$@"
+		;;
+	windows-project)
+		cmd_windows_build project "$@"
 		;;
 	-h | --help | help)
 		usage

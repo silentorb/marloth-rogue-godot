@@ -40,14 +40,15 @@
 
 - The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
 - **Offline policy:** Tool downloads happen in [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) and [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross) only — not in repo scripts. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc). Godot’s `.godot/` project cache is redirected to a compose volume (`marloth-godot-cache`) so it does not accumulate on the host bind mount.
-- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; `./scripts/devcontainer.sh windows-build` builds Windows margen natives on **`marloth-win`**, then runs a Godot **Windows Desktop** export on **`marloth`**.
-- **Windows export:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) holds cargo-xwin / clang-cl / Rust `windows-msvc`. It starts with the attach session via `runServices` and exposes an HTTP agent on `marloth-win:9876` (compose DNS only). From the attached container:
+- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; Windows outputs use `./scripts/devcontainer.sh windows-dist` or `windows-project` (both build margen natives on **`marloth-win`** first).
+- **Windows outputs:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) holds cargo-xwin / clang-cl / Rust `windows-msvc`. It starts with the attach session via `runServices` and exposes an HTTP agent on `marloth-win:9876` (compose DNS only). Sibling dirs under **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`):
 
-  ```bash
-  ./scripts/devcontainer.sh windows-build
-  ```
+  | Command / task | Output | Use when |
+  |---|---|---|
+  | `windows-dist` (**Build Windows dist**; `windows-build` is an alias) | `$MARLOTH_WIN_OUT/dist/` (`marloth.exe` + data) | Run the packaged app on Windows — no Godot editor |
+  | `windows-project` (**Build Windows project**) | `$MARLOTH_WIN_OUT/project/` | Open the folder in **Windows Godot 4.6 .NET** |
 
-  That installs Windows margen DLLs into the workspace `addons/margen/bin/`, then exports with Linux Godot (mono Windows templates) to **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`). Run **`marloth.exe`** on Windows — no Windows Godot editor required for play.
+  Both install Windows margen DLLs into workspace `addons/margen/bin/` via the agent. Dist uses Linux Godot (mono Windows templates) to export; project rsyncs sources and `dotnet publish -r win-x64`.
 - Do **not** spawn Windows Godot remotely from the Linux container (no HTTP launcher / remote client).
 - After Dockerfile changes: **Dev Containers → Rebuild and Reopen in Container**.
 
