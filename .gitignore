@@ -10,3 +10,6 @@
 
 # Temporary mounts
 .mnt/
+
+# Local Godot file logs (keep logs/.gitkeep tracked)
+/logs/*.log

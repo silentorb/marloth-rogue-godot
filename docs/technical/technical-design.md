@@ -29,7 +29,8 @@ Directories used for Godot-related and project files today (not exhaustive):
 | `./src` | C# libraries (`Marloth.Core`, `Marloth.Client`, `Marloth.Automation`, `Marloth.Automation.Contracts`) |
 | `./tests/unit` | Engine-agnostic unit tests |
 | `./tests/functional` | Core functional journeys and Godot playbook automation |
-| `./main.tscn` | Entry / main scene (`run/main_scene`) |
+| `./main.tscn` | Entry / main scene (`run/main_scene`); instances the margen debug world until a real shell exists |
+| `./logs/` | Local Godot file logs (`logs/marloth.log`; configured in `project.godot`) |
 | `project.godot` | Godot project settings |
 | `marloth.csproj` | Godot host / main assembly |
 

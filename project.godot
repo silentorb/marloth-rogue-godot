@@ -23,6 +23,13 @@ GodotRpcHost="*res://src/Marloth.Client/GodotRpcHost.cs"
 
 project/assembly_name="marloth"
 
+[debug]
+
+file_logging/enable_file_logging=true
+file_logging/enable_file_logging.pc=true
+file_logging/log_path="logs/marloth.log"
+file_logging/max_log_files=5
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

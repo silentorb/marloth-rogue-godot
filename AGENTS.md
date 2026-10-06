@@ -3,7 +3,7 @@
 ## Project
 
 - **Engine**: Godot **4.6**, Forward Plus renderer, **Jolt** for 3D physics.
-- **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`).
+- **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`). Until a real shell exists, that scene instances [`scenes/margen_world_debug.tscn`](scenes/margen_world_debug.tscn). PC file logging writes to `logs/marloth.log` (project- or exe-local; see `debug/file_logging` in `project.godot`).
 - **Name / assembly**: Application id is `marloth`; `project.godot` sets `[dotnet]` `project/assembly_name` for C# when used.
 - **C# modules**:
   - **`Marloth.Core`** — engine-agnostic logic; see [`src/Marloth.Core/`](src/Marloth.Core/).
@@ -40,16 +40,16 @@
 
 - The **dev container** installs **Godot .NET 4.6** (Linux) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
 - **Offline policy:** Tool downloads happen in [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) and [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross) only — not in repo scripts. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc). Godot’s `.godot/` project cache is redirected to a compose volume (`marloth-godot-cache`) so it does not accumulate on the host bind mount.
-- **Compose management:** From the WSL host, use [`scripts/devcontainer.sh`](scripts/devcontainer.sh) (`rebuild`, `up`, `exec`, …). Godot functional tests run in the **`marloth`** service; `./scripts/devcontainer.sh functional-tests` (and the VS Code task) works when attached (runs locally) or from the WSL host (compose exec).
-- **Windows play:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) provides MinGW / Rust `windows-gnu` / .NET `win-x64` for cross-building a Windows play tree. From the WSL host:
+- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; `./scripts/devcontainer.sh windows-build` builds Windows margen natives on **`marloth-win`**, then runs a Godot **Windows Desktop** export on **`marloth`**.
+- **Windows export:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) holds cargo-xwin / clang-cl / Rust `windows-msvc`. It starts with the attach session via `runServices` and exposes an HTTP agent on `marloth-win:9876` (compose DNS only). From the attached container:
 
   ```bash
-  ./scripts/devcontainer.sh up marloth-win
-  ./scripts/devcontainer.sh exec marloth-win ./scripts/build-windows.sh
+  ./scripts/devcontainer.sh windows-build
   ```
 
-  That syncs a playable tree to **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`), including Windows margen DLLs and C# `win-x64` assemblies. Open that folder in **Windows Godot 4.6 .NET**. Cursor stays attached to the **`marloth`** service, not `marloth-win`.
+  That installs Windows margen DLLs into the workspace `addons/margen/bin/`, then exports with Linux Godot (mono Windows templates) to **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`). Run **`marloth.exe`** on Windows — no Windows Godot editor required for play.
 - Do **not** spawn Windows Godot remotely from the Linux container (no HTTP launcher / remote client).
+- After Dockerfile changes: **Dev Containers → Rebuild and Reopen in Container**.
 
 ## Product and engineering docs
 

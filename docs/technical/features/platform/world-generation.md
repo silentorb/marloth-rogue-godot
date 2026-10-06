@@ -33,7 +33,29 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement).
 
-**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows editor play, use the **`marloth-win`** service and [`scripts/build-windows.sh`](../../../../scripts/build-windows.sh) (MinGW cross-build → `$MARLOTH_WIN_OUT`, default `/mnt/e/dev/games/marloth-godot`).
+**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR). **margen-godot** builds meshes via `MargenWorldMesh`; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). The entry scene [`main.tscn`](../../../../main.tscn) instances that debug world until a real shell exists (F5 / Windows export boot). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For a Windows Desktop export, from the attached marloth container run `./scripts/devcontainer.sh windows-build` (marloth-win natives → Godot `--export-debug`/`--export-release` → `$MARLOTH_WIN_OUT`, default `/mnt/e/dev/games/marloth-godot`). File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or export dir.
+
+### Debug scene contract (functional tests)
+
+[`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn) uses:
+
+| Property | Value |
+|----------|-------|
+| `seed` | `7` |
+| `max_blocks` | `20` |
+| `cell_size` | `(2, 2, 2)` |
+| `auto_generate` | `true` |
+
+Godot playbooks (via `./scripts/run_godot_functional_tests.sh`, which runs [`scripts/ensure-margen-natives.sh`](../../../../scripts/ensure-margen-natives.sh)):
+
+| Playbook | Requirement |
+|----------|-------------|
+| `MargenExtensionLoaded` | `ClassDB.class_exists("MargenWorldMesh")` |
+| `MargenWorldDebug` | After load + frames: `MeshInstance3D` at `MargenWorldMesh/MeshInstance3D` has a mesh with `surface_count > 0` and total `vertex_count` in **`[200, 4000]`** (inclusive). Calibrated observation on Godot 4.6 headless: **800** vertices across **3** surfaces for this seed/max_blocks. |
+
+The vertex band is a functional tolerance (not bit-exact). Tighten the band in this doc and in `MargenWorldDebugPlaybook` if generation becomes more tightly specified. Lower-layer C ABI coverage remains in margen (`cargo test` / `ffi_world_faces_smoke`).
+
+Windows-only load failures after Linux playbooks PASS: see [`addons/margen/README.md`](../../../../addons/margen/README.md) **Diagnosing load failures**.
 
 ## Unreal reference folders (read-only)
 
@@ -53,7 +75,7 @@ When citing Unreal sources in ports or reviews, prefer paths under **`unreal-mar
 - [`.devcontainer/devcontainer.json`](../../../../.devcontainer/devcontainer.json) — `workspaceFolder` `/workspaces/marloth`, readonly Plugins mount
 - [`.devcontainer/docker-compose.yml`](../../../../.devcontainer/docker-compose.yml) — `..:/workspaces/marloth`, plus readonly Source/Plugins and writable margen / margen-godot
 
-The margen repo also has its own `.devcontainer` for Rust build/test; the marloth compose file includes a **`margen`** service for optional side-by-side work and a **`marloth-win`** service for Windows cross-compiles (not the Cursor attach target).
+The margen repo also has its own `.devcontainer` for Rust build/test; the marloth compose file includes a **`margen`** service for optional side-by-side work and a **`marloth-win`** service for Windows cross-compiles (HTTP build agent on the compose network; not the Cursor attach target).
 
 ## Build and test (margen)
 
