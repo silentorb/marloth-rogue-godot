@@ -14,7 +14,6 @@ services:
       - /mnt/e/dev/games/marloth/Plugins:/mnt/e/dev/games/marloth/Plugins:ro
       # Windows Desktop export output (Godot --export-* from marloth).
       - /mnt/e/dev/games/marloth-godot:/mnt/e/dev/games/marloth-godot
-      - /home/chris/dev/minimap:/home/chris/dev/minimap:ro
       - /home/chris/dev/margen:/home/chris/dev/margen
       - /home/chris/dev/margen-godot:/home/chris/dev/margen-godot
     environment:

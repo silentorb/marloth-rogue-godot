@@ -6,7 +6,7 @@
     "workspaceFolder": "/workspaces/marloth",
     "features": {},
     // Same absolute targets as marloth.code-workspace so multi-root folders survive
-    // "Reopen in Container". minimap / unreal-marloth / unreal-marloth-plugins are
+    // "Reopen in Container". unreal-marloth / unreal-marloth-plugins are
     // reference-only (readonly); margen and margen-godot are read-write.
     "mounts": [
         "source=/tmp/.X11-unix,target=/tmp/.X11-unix,type=bind",
@@ -15,7 +15,6 @@
         "source=/mnt/e/dev/games/marloth/Source,target=/mnt/e/dev/games/marloth/Source,type=bind,readonly",
         "source=/mnt/e/dev/games/marloth/Plugins,target=/mnt/e/dev/games/marloth/Plugins,type=bind,readonly",
         "source=/mnt/e/dev/games/marloth-godot,target=/mnt/e/dev/games/marloth-godot,type=bind",
-        "source=/home/chris/dev/minimap,target=/home/chris/dev/minimap,type=bind,readonly",
         "source=/home/chris/dev/margen,target=/home/chris/dev/margen,type=bind",
         "source=/home/chris/dev/margen-godot,target=/home/chris/dev/margen-godot,type=bind"
     ],
