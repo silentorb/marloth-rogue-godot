@@ -77,8 +77,11 @@ void MarlothSimHost::tick_once(double dt) {
 	if (demo_mesh && entities && count > 0) {
 		for (size_t i = 0; i < count; i++) {
 			if (entities[i].entity_id == 1) {
-				demo_mesh->set_position(Vector3(entities[i].pos_x, entities[i].pos_y, entities[i].pos_z));
-				demo_mesh->set_rotation(Vector3(0.0f, entities[i].yaw, 0.0f));
+				// Sim is RH Z-up; Godot is RH Y-up: (x,y,z) -> (x,z,-y).
+				// Yaw about sim +Z maps to Godot yaw about +Y with a sign flip
+				// so +Y forward becomes Godot -Z.
+				demo_mesh->set_position(Vector3(entities[i].pos_x, entities[i].pos_z, -entities[i].pos_y));
+				demo_mesh->set_rotation(Vector3(0.0f, -entities[i].yaw, 0.0f));
 				break;
 			}
 		}

@@ -2,6 +2,8 @@
 
 Authoritative game rules and world state live in **`marloth_sim`** (Rust). Godot is a **client** (presentation / input) plus isolated **services** the sim may call. Both roles share one Godot process by coincidence; the sim APIs treat them separately.
 
+Positions and yaw are **right-handed Z-up** in the sim; `MarlothSimHost` converts for Godot. See [coordinates.md](coordinates.md).
+
 ## Rules for new features
 
 1. Put gameplay rules, ticks, and state in `native/crates/marloth_sim` (or crates it owns).

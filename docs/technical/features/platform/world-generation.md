@@ -2,6 +2,8 @@
 
 Marloth’s procedural worlds will come from the **margen** stack: engine-agnostic generation in **Rust**, **mythic** utility crates in the same repo, a **C ABI** (`margen_ffi` / `include/margen.h`), and a **margen-godot** GDExtension when Godot needs meshes and scenes. Legacy Unreal code remains **read-only reference** in the workspace—not a build dependency of the Godot game.
 
+Generation datasets are **right-handed Z-up**; margen-godot converts to Godot Y-up at the mesh boundary. See [coordinates.md](coordinates.md) and margen [`docs/coordinates.md`](../../../../margen/docs/coordinates.md).
+
 For Marloth-specific glue (when generation is wired into scenes), prefer this repo’s native game code (`marloth_sim` / GDExtension client role) and docs; do not put algorithms in margen-godot. The C ABI should prefer **bulk buffer** exports over chatty per-point getters when transferring mesh/face data.
 
 See also [Technical design](../../technical-design.md) for presentation vs logic boundaries.

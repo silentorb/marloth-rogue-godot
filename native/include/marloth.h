@@ -23,6 +23,7 @@ typedef struct MarlothInputFrame {
 	uint32_t _pad;
 } MarlothInputFrame;
 
+/* pos_* and yaw are right-handed Z-up (yaw about +Z). Hosts convert for Godot. */
 typedef struct MarlothSnapshotEntity {
 	uint32_t entity_id;
 	float pos_x;

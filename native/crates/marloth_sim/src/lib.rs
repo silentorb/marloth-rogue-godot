@@ -1,11 +1,14 @@
 //! Authoritative game simulation. Engine-agnostic; no Godot types.
 //!
-//! Godot is a client (presentation) plus isolated services. This crate owns game state.
+//! Positions and yaw use right-handed Z-up (+X right, +Y forward/north, +Z up).
+//! Godot is a client (presentation) plus isolated services; hosts convert at the boundary.
 
 /// Library / protocol version string for smoke tests and FFI.
 pub const VERSION: &str = "0.1.0";
 
 /// Packed client → sim input for one tick (bulk; not per-action FFI).
+///
+/// `axes_x` / `axes_y` are planar motion in RH Z-up (+X right, +Y forward).
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct InputFrame {
@@ -18,6 +21,8 @@ pub struct InputFrame {
 }
 
 /// One entity transform intent in a snapshot (sim → client).
+///
+/// `pos_*` and `yaw` are right-handed Z-up (yaw about +Z). Hosts convert for Godot.
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Default, PartialEq)]
 pub struct SnapshotEntity {
@@ -51,7 +56,7 @@ pub struct ServiceReplyBlob {
 #[derive(Clone, Debug)]
 pub struct Sim {
 	tick: u64,
-	/// Demo entity used to prove bulk snapshot sync (id 1).
+	/// Demo entity used to prove bulk snapshot sync (id 1). RH Z-up.
 	demo_x: f32,
 	demo_y: f32,
 	demo_z: f32,
@@ -70,8 +75,8 @@ impl Sim {
 		Self {
 			tick: 0,
 			demo_x: 0.0,
-			demo_y: 0.5,
-			demo_z: 0.0,
+			demo_y: 0.0,
+			demo_z: 0.5,
 			demo_yaw: 0.0,
 			last_service_request: ServiceRequestBlob::default(),
 		}
@@ -96,7 +101,7 @@ impl Sim {
 			1.0 / 60.0
 		};
 		self.demo_x += input.axes_x * dt * 3.0;
-		self.demo_z += input.axes_y * dt * 3.0;
+		self.demo_y += input.axes_y * dt * 3.0;
 		if input.buttons & 1 != 0 {
 			self.demo_yaw += dt * 2.0;
 		}
@@ -154,6 +159,23 @@ mod tests {
 		assert_eq!(snap.tick, 1);
 		assert_eq!(snap.entities.len(), 1);
 		assert!((snap.entities[0].pos_x - 3.0).abs() < 1e-4);
+		assert!((snap.entities[0].pos_z - 0.5).abs() < 1e-4);
+	}
+
+	#[test]
+	fn axes_y_moves_forward_on_positive_y() {
+		let mut sim = Sim::new();
+		let input = InputFrame {
+			tick: 0,
+			dt_seconds: 1.0,
+			axes_x: 0.0,
+			axes_y: 1.0,
+			buttons: 0,
+			_pad: 0,
+		};
+		let _req = sim.step(&input);
+		let snap = sim.snapshot();
+		assert!((snap.entities[0].pos_y - 3.0).abs() < 1e-4);
 	}
 
 	#[test]
