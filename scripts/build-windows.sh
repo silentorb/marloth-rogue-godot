@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Orchestrate Windows GDExtension natives (margen + marloth via marloth-win)
-# + dist export or project sync (marloth).
+# + dist export and/or project sync (marloth).
 #
-# Usage: build-windows.sh [dist|project]
+# Usage: build-windows.sh [dist|project|all]
 #   dist (default): POST natives, then export-windows.sh → $MARLOTH_WIN_OUT/dist
 #   project:        POST natives, then sync-windows-project.sh → $MARLOTH_WIN_OUT/project
+#   all:            POST natives once, then project sync + dist export
 #
 # On marloth-win (no Godot): natives only (also the HTTP agent entrypoint).
 set -euo pipefail
@@ -23,9 +24,9 @@ if [[ ! -x "${GODOT_BIN}" ]]; then
 fi
 
 case "${MODE}" in
-dist|project) ;;
+dist|project|all) ;;
 *)
-	echo "Usage: $0 [dist|project]" >&2
+	echo "Usage: $0 [dist|project|all]" >&2
 	exit 2
 	;;
 esac
@@ -74,23 +75,38 @@ case "${status}" in
 	;;
 esac
 
-if [[ "${MODE}" == "project" ]]; then
+run_project() {
 	"${ROOT}/scripts/sync-windows-project.sh"
-	exit 0
-fi
+}
 
-"${ROOT}/scripts/export-windows.sh"
+run_dist() {
+	"${ROOT}/scripts/export-windows.sh"
 
-DIST_DIR="${WIN_ROOT}/dist"
-VERIFY_SCRIPT="${ROOT}/scripts/verify-margen-windows.sh"
-if [[ -x "${VERIFY_SCRIPT}" ]]; then
-	echo
-	echo "Running margen Windows dist audit..."
-	if ! "${VERIFY_SCRIPT}" "${DIST_DIR}"; then
-		if [[ "${VERIFY_MARGEN_STRICT:-0}" == "1" ]]; then
-			echo "verify-margen-windows.sh failed (VERIFY_MARGEN_STRICT=1)." >&2
-			exit 1
+	local dist_dir="${WIN_ROOT}/dist"
+	local verify_script="${ROOT}/scripts/verify-margen-windows.sh"
+	if [[ -x "${verify_script}" ]]; then
+		echo
+		echo "Running margen Windows dist audit..."
+		if ! "${verify_script}" "${dist_dir}"; then
+			if [[ "${VERIFY_MARGEN_STRICT:-0}" == "1" ]]; then
+				echo "verify-margen-windows.sh failed (VERIFY_MARGEN_STRICT=1)." >&2
+				exit 1
+			fi
+			echo "verify-margen-windows.sh reported FAIL (non-strict; dist still succeeded)." >&2
 		fi
-		echo "verify-margen-windows.sh reported FAIL (non-strict; dist still succeeded)." >&2
 	fi
-fi
+}
+
+case "${MODE}" in
+project)
+	run_project
+	;;
+dist)
+	run_dist
+	;;
+all)
+	echo "Windows all: project sync, then dist export (natives already built)..."
+	run_project
+	run_dist
+	;;
+esac

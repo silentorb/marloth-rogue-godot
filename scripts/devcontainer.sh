@@ -3,13 +3,14 @@
 #
 # Prefer running tasks while attached (Cursor Dev Containers).
 # - functional-tests: runs locally when attached
-# - windows-dist / windows-project: marloth-win natives + dist export or project sync
+# - windows-dist / windows-project / windows-all: marloth-win natives + outputs
 # - windows-build: alias of windows-dist
 #
 # Examples:
 #   ./scripts/devcontainer.sh functional-tests
 #   ./scripts/devcontainer.sh windows-dist
 #   ./scripts/devcontainer.sh windows-project
+#   ./scripts/devcontainer.sh windows-all
 #   ./scripts/devcontainer.sh rebuild   # needs docker; prefer Dev Containers → Rebuild
 set -euo pipefail
 
@@ -40,15 +41,17 @@ Commands:
   functional-tests [args...]         Run Godot playbooks (attached, or via marloth)
   windows-dist                       Packaged Windows app → \$MARLOTH_WIN_OUT/dist
   windows-project                    Editor play tree → \$MARLOTH_WIN_OUT/project
+  windows-all                        Natives once, then project + dist
   windows-build                      Alias of windows-dist
   shell [service]                    Open bash in a service (default: marloth)
 
 Services: marloth, marloth-win, margen, or all
 
 Notes:
-  - functional-tests / windows-dist / windows-project work when attached. Prefer the VS Code tasks.
+  - functional-tests / windows-* work when attached. Prefer the VS Code tasks.
   - windows-dist: POST natives to marloth-win, then Godot export into dist/.
-  - windows-project: POST natives, then rsync + win-x64 publish into project/.
+  - windows-project: POST natives, then rsync sources into project/.
+  - windows-all: POST natives once, then project sync + dist export (prefer for plan wrap-up).
   - After Dockerfile changes: Dev Containers → Rebuild and Reopen in Container
     (devcontainer.json runServices starts marloth-win with the attach session).
   - down --volumes removes marloth-godot-cache (Godot import/shader cache).
@@ -59,7 +62,7 @@ require_docker() {
 	if ! command -v docker >/dev/null 2>&1; then
 		echo "docker is not on PATH." >&2
 		echo "This compose command needs Docker. Prefer Cursor: Dev Containers → Rebuild Container." >&2
-		echo "For playbooks / Windows outputs, use: $(basename "$0") functional-tests | windows-dist | windows-project" >&2
+		echo "For playbooks / Windows outputs, use: $(basename "$0") functional-tests | windows-dist | windows-project | windows-all" >&2
 		exit 1
 	fi
 	if [[ ! -f "${COMPOSE_FILE}" ]]; then
@@ -282,9 +285,9 @@ cmd_windows_build() {
 		exit 2
 	fi
 	case "${mode}" in
-	dist|project) ;;
+	dist|project|all) ;;
 	*)
-		echo "Unknown Windows mode: ${mode} (expected dist or project)." >&2
+		echo "Unknown Windows mode: ${mode} (expected dist, project, or all)." >&2
 		exit 2
 		;;
 	esac
@@ -330,6 +333,9 @@ main() {
 		;;
 	windows-project)
 		cmd_windows_build project "$@"
+		;;
+	windows-all)
+		cmd_windows_build all "$@"
 		;;
 	-h | --help | help)
 		usage

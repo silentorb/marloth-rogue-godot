@@ -21,14 +21,16 @@ Godot functional tests call [`scripts/ensure-margen-natives.sh`](../../scripts/e
 From the attached **`marloth`** container (see [AGENTS.md](../../AGENTS.md)):
 
 ```bash
+./scripts/devcontainer.sh windows-all       # natives once → project/ + dist/
 ./scripts/devcontainer.sh windows-dist      # → $MARLOTH_WIN_OUT/dist/
 ./scripts/devcontainer.sh windows-project   # → $MARLOTH_WIN_OUT/project/
 ```
 
 Both POST to the **`marloth-win`** compose-network build agent (`http://marloth-win:9876/build`), which runs [`scripts/build-windows-natives.sh`](../../scripts/build-windows-natives.sh) and installs Windows DLLs into workspace `addons/margen/bin/` (`libmargen_godot.windows.*.dll` + `margen_ffi.dll`).
 
+- **all:** [`scripts/build-windows.sh`](../../scripts/build-windows.sh) `all` — natives once, then project + dist. Prefer `./scripts/devcontainer.sh windows-all` (or the **Build Windows all** task) when refreshing both outputs.
 - **dist:** [`scripts/export-windows.sh`](../../scripts/export-windows.sh) (Godot headless Windows Desktop export) into `$MARLOTH_WIN_OUT/dist`. [`scripts/verify-margen-windows.sh`](../../scripts/verify-margen-windows.sh) audits that dir (set `VERIFY_MARGEN_STRICT=1` to fail the build on WARN/FAIL). Run `dist/marloth.exe` on Windows — no editor required. `windows-build` is an alias of `windows-dist`.
-- **project:** [`scripts/sync-windows-project.sh`](../../scripts/sync-windows-project.sh) rsyncs sources and publishes win-x64 C# into `$MARLOTH_WIN_OUT/project`. Open that folder in Windows Godot 4.6 .NET.
+- **project:** [`scripts/sync-windows-project.sh`](../../scripts/sync-windows-project.sh) rsyncs sources into `$MARLOTH_WIN_OUT/project`. Open that folder in Windows Godot 4.6.
 
 Natives are built with **cargo-xwin** / **clang-cl** (`x86_64-pc-windows-msvc`), not MinGW.
 

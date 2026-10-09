@@ -11,8 +11,8 @@ Build/install from the repo:
 ./native/gdextension/scripts/build.sh
 ./native/gdextension/scripts/install-to-marloth.sh
 
-# Windows DLLs (marloth-win agent; also runs as part of windows-project / windows-dist)
-./scripts/devcontainer.sh windows-project
+# Windows DLLs (marloth-win agent; also runs as part of windows-all / windows-project / windows-dist)
+./scripts/devcontainer.sh windows-all
 ```
 
 Windows Godot needs `addons/marloth/bin/*.dll` beside `marloth.gdextension`. Without them you get

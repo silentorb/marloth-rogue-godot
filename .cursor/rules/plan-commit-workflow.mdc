@@ -1,11 +1,11 @@
 ---
-description: Include Testing and Commit strategy sections in every Cursor plan; defer commits until user explicitly requests
+description: Include Testing, Windows refresh, and Commit strategy in every Cursor plan; defer commits until user explicitly requests
 alwaysApply: true
 ---
 
 # Plan commit workflow
 
-When creating or updating a plan, include a dedicated **Testing** section, a **Commit strategy** section, and a final **commit-await-approval** todo. Do not auto-commit when implementation finishes.
+When creating or updating a plan, include a dedicated **Testing** section, a **Commit strategy** section, a **windows-refresh** todo near the end, and a final **commit-await-approval** todo. Do not auto-commit when implementation finishes.
 
 ## Testing section (required)
 
@@ -16,6 +16,22 @@ Every plan must include at least one dedicated `## Testing` section (same class 
 - A short fallout / regression run note after implementation
 
 Doc-only or pure-config plans still need a short Testing section (e.g. “no automated tests; manual check …” or “link updates only”).
+
+## Windows refresh (required near end)
+
+After implementation and testing succeed, plans must refresh both Windows outputs so dist and project stay ready to use. Prefer:
+
+```bash
+./scripts/devcontainer.sh windows-all
+```
+
+(natives once via marloth-win, then project sync + dist export). Equivalent VS Code task: **Build Windows all**.
+
+Add a plan todo `windows-refresh` **immediately before** `commit-await-approval`:
+
+> **Windows refresh** — Run `./scripts/devcontainer.sh windows-all` so `$MARLOTH_WIN_OUT/project` and `$MARLOTH_WIN_OUT/dist` are updated.
+
+**Skip only** when the plan cannot affect runtime/Windows outputs (e.g. docs-only, Cursor rules-only, or pure comments with no product/scripts change). If skipping, say so explicitly in the plan (“skip windows-refresh: …”) and omit or cancel that todo.
 
 ## Workspace git layout
 
@@ -50,13 +66,16 @@ For each affected repo specify:
 - files to exclude
 - draft commit message (1–2 sentences, why not what; match recent `git log` style)
 
-## 4. Final todo (always last)
+## 4. End-of-plan todos
 
-Add a plan frontmatter / todo item `commit-await-approval` as the **last** item:
+Add these near the end of the plan todo list (order matters):
 
-> **Commit (await user approval)** — After implementation and verification, re-run git status/diff per repo, reconcile with this strategy, commit only when the user explicitly requests it.
+1. `windows-refresh` (unless explicitly skipped — see **Windows refresh** above) — run after implementation/testing; mark completed once `windows-all` succeeds.
+2. `commit-await-approval` as the **last** item:
 
-Keep it **pending** during planning and implementation unless the user asks to commit.
+> **Commit (await user approval)** — After implementation, verification, and Windows refresh (if applicable), re-run git status/diff per repo, reconcile with this strategy, commit only when the user explicitly requests it.
+
+Keep `commit-await-approval` **pending** during planning and implementation unless the user asks to commit.
 
 ## 5. Commit strategy section template
 

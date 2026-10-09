@@ -31,7 +31,7 @@
 - **`docs/game/game-design.md` is locked:** Do **not** create, edit, or delete that file unless the **user explicitly instructed** changes to it in the current conversation. Put secondary design detail in [docs/game/features/](docs/game/features/) instead. Reading it is fine; proposing edits without that instruction is not. See [`.cursor/rules/game-design-lock.mdc`](.cursor/rules/game-design-lock.mdc).
 - **Bug regressions:** When fixing a user-reported bug the suite missed, add a regression test at the lowest sound layer—or escalate instead of brittle/flaky coverage. See [`.cursor/rules/bug-regression-tests.mdc`](.cursor/rules/bug-regression-tests.mdc) and [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md) (**Bug regressions / debugging**).
 - **Error handling:** Prefer explicit outcomes for expected failures; use panic/abort only for truly exceptional cases or documented fail-fast boundaries. Non-trivial paths need a deliberate failure strategy. See [`.cursor/rules/error-handling.mdc`](.cursor/rules/error-handling.mdc) and [docs/technical/features/platform/error-handling.md](docs/technical/features/platform/error-handling.md).
-- **Plans:** Every Cursor plan must include a dedicated **Testing** section and a **Commit strategy** (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
+- **Plans:** Every Cursor plan must include a dedicated **Testing** section, a **Commit strategy**, and (unless explicitly skipped) a **windows-refresh** step via `./scripts/devcontainer.sh windows-all` before commit-await-approval (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
 - **Offline dev:** Do not add runtime `curl`/`wget` download steps to scripts or tasks. Fetch tools and dependencies in **Dockerfiles** / image build only. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc).
 - **Native / margen:** Algorithms are Rust in the margen repo ([docs/rust-style.md](../margen/docs/rust-style.md)). Hosts consume the **C ABI**; margen-godot GDExtension sources remain C++ (godot-cpp). Marloth game authority is Rust under [`native/`](native/).
 
@@ -39,15 +39,16 @@
 
 - The **dev container** installs **Godot 4.6** (standard/non-.NET Linux preferred) and sets **`GODOT_BIN`** (see [`.devcontainer/devcontainer.json`](.devcontainer/devcontainer.json)). WSLg + Mesa Dozen (Vulkan-on-D3D12) support GUI runs; use this for **testing** (headless Godot playbooks or the **Launch Godot editor** VS Code task). Automated layers: [docs/technical/features/platform/testing.md](docs/technical/features/platform/testing.md), layout: [tests/functional/README.md](tests/functional/README.md).
 - **Offline policy:** Tool downloads happen in [`.devcontainer/Dockerfile`](.devcontainer/Dockerfile) and [`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross) only — not in repo scripts. See [`.cursor/rules/offline-container-downloads.mdc`](.cursor/rules/offline-container-downloads.mdc). Godot’s `.godot/` project cache is redirected to a compose volume (`marloth-godot-cache`) so it does not accumulate on the host bind mount.
-- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; Windows outputs use `./scripts/devcontainer.sh windows-dist` or `windows-project` (both build natives on **`marloth-win`** first).
+- **Attached workflows:** Prefer VS Code / Cursor tasks while attached to **`marloth`**. `./scripts/devcontainer.sh functional-tests` runs locally; Windows outputs use `./scripts/devcontainer.sh windows-all` (or `windows-dist` / `windows-project` alone). All of these build natives on **`marloth-win`** first.
 - **Windows outputs:** compose service **`marloth-win`** ([`.devcontainer/Dockerfile.windows-cross`](.devcontainer/Dockerfile.windows-cross)) holds cargo-xwin / clang-cl / Rust `windows-msvc`. It starts with the attach session via `runServices` and exposes an HTTP agent on `marloth-win:9876` (compose DNS only). Sibling dirs under **`$MARLOTH_WIN_OUT`** (default `/mnt/e/dev/games/marloth-godot` → `E:\dev\games\marloth-godot`):
 
   | Command / task | Output | Use when |
   |---|---|---|
+  | `windows-all` (**Build Windows all**) | `$MARLOTH_WIN_OUT/project/` **and** `dist/` | Refresh both outputs (natives once); prefer for plan wrap-up |
   | `windows-dist` (**Build Windows dist**; `windows-build` is an alias) | `$MARLOTH_WIN_OUT/dist/` (`marloth.exe` + data) | Run the packaged app on Windows — no Godot editor |
   | `windows-project` (**Build Windows project**) | `$MARLOTH_WIN_OUT/project/` | Open the folder in **Windows Godot 4.6** |
 
-  Both install Windows margen/marloth DLLs into workspace `addons/*/bin/` via the agent. Dist uses Linux Godot (Windows templates) to export; project rsyncs sources (no `dotnet publish`).
+  All install Windows margen/marloth DLLs into workspace `addons/*/bin/` via the agent. Dist uses Linux Godot (Windows templates) to export; project rsyncs sources (no `dotnet publish`). Agent plans should run `windows-all` near the end (see [`.cursor/rules/plan-commit-workflow.mdc`](.cursor/rules/plan-commit-workflow.mdc)).
 - Do **not** spawn Windows Godot remotely from the Linux container (no HTTP launcher / remote client).
 - After Dockerfile changes: **Dev Containers → Rebuild and Reopen in Container**.
 

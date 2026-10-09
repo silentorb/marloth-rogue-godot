@@ -71,6 +71,21 @@
                 "focus": false
             },
             "problemMatcher": []
+        },
+        {
+            "label": "Build Windows all",
+            "type": "shell",
+            "command": "./scripts/devcontainer.sh windows-all",
+            "options": {
+                "cwd": "${workspaceFolder:marloth}"
+            },
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared",
+                "focus": false
+            },
+            "problemMatcher": []
         }
     ]
 }
