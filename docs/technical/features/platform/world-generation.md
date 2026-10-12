@@ -2,7 +2,7 @@
 
 Marloth’s procedural worlds will come from the **margen** stack: engine-agnostic generation in **Rust**, **mythic** utility crates in the same repo, a **C ABI** (`margen_ffi` / `include/margen.h`), and a **margen-godot** GDExtension when Godot needs meshes and scenes. Legacy Unreal code remains **read-only reference** in the workspace—not a build dependency of the Godot game.
 
-Generation datasets are **right-handed Z-up**; margen-godot converts to Godot Y-up at the mesh boundary. See [coordinates.md](coordinates.md) and margen [`docs/coordinates.md`](../../../../margen/docs/coordinates.md).
+Generation datasets are **right-handed Z-up**; margen-godot converts to Godot Y-up at the mesh boundary and reverses face winding for Godot’s clockwise front-face convention. See [coordinates.md](coordinates.md) and margen [`docs/coordinates.md`](../../../../margen/docs/coordinates.md).
 
 For Marloth-specific glue (when generation is wired into scenes), prefer this repo’s native game code (`marloth_sim` / GDExtension client role) and docs; do not put algorithms in margen-godot. The C ABI should prefer **bulk buffer** exports over chatty per-point getters when transferring mesh/face data.
 
@@ -44,9 +44,11 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 | Property | Value |
 |----------|-------|
 | `seed` | `7` |
-| `max_blocks` | `20` |
+| `max_blocks` | `20` (primary **cell/block quantity** knob for the winding-path debug path) |
 | `cell_size` | `(2, 2, 2)` |
 | `auto_generate` | `true` |
+
+After the node is ready, changing `seed`, `max_blocks`, or `cell_size` (inspector or script) schedules a **debounced** regenerate (~0.3 s after the last change). Initial generation from `_ready` when `auto_generate` is true stays immediate.
 
 Godot playbooks (via `./scripts/run_godot_functional_tests.sh`, which runs [`scripts/ensure-margen-natives.sh`](../../../../scripts/ensure-margen-natives.sh)):
 
@@ -55,7 +57,7 @@ Godot playbooks (via `./scripts/run_godot_functional_tests.sh`, which runs [`scr
 | `MargenExtensionLoaded` | `ClassDB.class_exists("MargenWorldMesh")` |
 | `MargenWorldDebug` | After load + frames: `MeshInstance3D` at `MargenWorldMesh/MeshInstance3D` has a mesh with `surface_count > 0` and total `vertex_count` in **`[200, 4000]`** (inclusive). Calibrated observation on Godot 4.6 headless: **800** vertices across **3** surfaces for this seed/max_blocks. |
 
-The vertex band is a functional tolerance (not bit-exact). Tighten the band in this doc and in `MargenWorldDebugPlaybook` if generation becomes more tightly specified. Lower-layer C ABI coverage remains in margen (`cargo test` / `ffi_world_faces_smoke`).
+The vertex band is a functional tolerance (not bit-exact). Tighten the band in this doc and in `MargenWorldDebugPlaybook` if generation becomes more tightly specified. Lower-layer C ABI coverage remains in margen (`cargo test` / `ffi_world_faces_smoke`). Exterior face culling (Godot clockwise front faces) is covered by margen RH-outward unit tests plus host reversal in margen-godot; visual confirm in the Windows editor when changing winding.
 
 Windows-only load failures after Linux playbooks PASS: see [`addons/margen/README.md`](../../../../addons/margen/README.md) **Diagnosing load failures**.
 

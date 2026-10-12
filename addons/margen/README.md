@@ -46,6 +46,8 @@ Then from marloth: `./scripts/export-windows.sh` (dist) or `./scripts/sync-windo
 
 Open [`scenes/margen_world_debug.tscn`](../../scenes/margen_world_debug.tscn) in the Godot editor (or run the scene). It instances `MargenWorldMesh`, which generates a winding-path world grid and displays prism faces with placeholder materials.
 
+Inspector knobs on `MargenWorldMesh`: `seed`, `max_blocks` (cell/block quantity), and `cell_size`. After ready, edits to those properties regenerate the mesh after a short quiet interval (~0.3 s) so scrubbing values does not rebuild on every tick. `auto_generate` still triggers an immediate generate in `_ready`.
+
 F5 / Windows Desktop export boots [`main.tscn`](../../main.tscn), which instances this debug world until a real shell exists. Playbooks that need the debug scene alone still load `res://scenes/margen_world_debug.tscn` directly.
 
 Contract for automated tests: seed=`7`, max_blocks=`20`, cell_size=`(2,2,2)` — see [world-generation.md](../../docs/technical/features/platform/world-generation.md).
