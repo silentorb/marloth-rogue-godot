@@ -14,6 +14,7 @@ pub const MARLOTH_SIM_CLASS: &str = "MarlothSimHost";
 pub const VERTEX_MIN: i32 = 200;
 pub const VERTEX_MAX: i32 = 4000;
 pub const MESH_PATH: &str = "MargenWorldMesh/MeshInstance3D";
+pub const PLAYER_SPAWN_PATH: &str = "MargenWorldMesh/Actors/PlayerSpawnLocation";
 
 #[derive(Debug)]
 pub struct PlaybookOutcome {
@@ -111,16 +112,28 @@ fn margen_world_debug(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 	}
 	let path = (ops.scene_path)().unwrap_or_default();
 	let root = (ops.scene_root_name)().unwrap_or_default();
-	match (ops.mesh_vertex_count)(MESH_PATH) {
-		Ok(info) => outcome_from_mesh(path, root, info),
-		Err(e) => PlaybookOutcome::fail(e, format!("path={path};root={root}")),
-	}
+	let mesh_info = match (ops.mesh_vertex_count)(MESH_PATH) {
+		Ok(info) => info,
+		Err(e) => return PlaybookOutcome::fail(e, format!("path={path};root={root}")),
+	};
+	let spawn_info = match (ops.mesh_vertex_count)(PLAYER_SPAWN_PATH) {
+		Ok(info) => info,
+		Err(e) => {
+			return PlaybookOutcome::fail(e, format!("path={path};root={root};mesh_ok=pending"));
+		}
+	};
+	outcome_from_mesh_and_spawn(path, root, mesh_info, spawn_info)
 }
 
-fn outcome_from_mesh(path: String, root: String, info: MeshInfo) -> PlaybookOutcome {
+fn outcome_from_mesh_and_spawn(
+	path: String,
+	root: String,
+	info: MeshInfo,
+	spawn: MeshInfo,
+) -> PlaybookOutcome {
 	let diagnostics = format!(
-		"path={path};root={root};mesh_found={};has_mesh={};surfaces={};vertices={}",
-		info.found, info.has_mesh, info.surface_count, info.vertex_count
+		"path={path};root={root};mesh_found={};has_mesh={};surfaces={};vertices={};spawn_found={}",
+		info.found, info.has_mesh, info.surface_count, info.vertex_count, spawn.found
 	);
 	if !info.found {
 		return PlaybookOutcome::fail(format!("Node '{MESH_PATH}' not found."), diagnostics);
@@ -140,6 +153,12 @@ fn outcome_from_mesh(path: String, root: String, info: MeshInfo) -> PlaybookOutc
 				"Vertex count {} outside documented band [{VERTEX_MIN}, {VERTEX_MAX}].",
 				info.vertex_count
 			),
+			diagnostics,
+		);
+	}
+	if !spawn.found {
+		return PlaybookOutcome::fail(
+			format!("Player spawn actor '{PLAYER_SPAWN_PATH}' not found after generate."),
 			diagnostics,
 		);
 	}

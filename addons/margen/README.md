@@ -65,7 +65,7 @@ Playbooks:
 | Playbook | Asserts |
 |----------|---------|
 | `MargenExtensionLoaded` | `ClassDB` contains `MargenWorldMesh` |
-| `MargenWorldDebug` | Debug scene auto-generates a mesh within the documented vertex band |
+| `MargenWorldDebug` | Debug scene auto-generates a mesh within the documented vertex band and a `Actors/PlayerSpawnLocation` placeholder |
 
 If these **fail on Linux**, fix the extension/API/code before debugging Windows. If they **pass on Linux** but the Windows dist fails to load margen, use the diagnostics runbook below.
 

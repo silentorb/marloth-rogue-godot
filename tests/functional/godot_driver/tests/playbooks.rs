@@ -24,6 +24,9 @@ impl GodotSession {
 			.env("MARLOTH_AUTOMATION_ENABLED", "1")
 			.env("MARLOTH_AUTOMATION_HOST", "127.0.0.1")
 			.env("MARLOTH_AUTOMATION_PORT", port.to_string())
+			// Cargo test injects CARGO_TARGET_DIR into LD_LIBRARY_PATH; a stale
+			// libmargen_ffi.so there shadows addons/margen/bin via DT_NEEDED.
+			.env_remove("LD_LIBRARY_PATH")
 			.stdout(Stdio::piped())
 			.stderr(Stdio::piped());
 

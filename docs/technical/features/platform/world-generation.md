@@ -17,9 +17,14 @@ See also [Technical design](../../technical-design.md) for presentation vs logic
 | **margen_generation_graphing** | Same repo | Story DAG, branching, `sectors_to_dag`. |
 | **margen_generation_structure** | Same repo | Clusters, story → expanded `CellGrid`, prefab-seed `windingPath` / `generate_world_grid`. |
 | **margen_generation_graphing_analysis** | Same repo | `partition_sectors`, `generate_goals`. |
-| **margen_ffi** | Same repo — crate `margen_ffi`, header `include/margen.h` | C ABI for engine hosts (story grid + **world-faces** / `RenderFace` export). |
-| **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: `MargenWorldMesh` converts face datasets into `ArrayMesh` + placeholder materials via the C ABI. |
+| **margen_generation_population** | Same repo | Placeables → abstract `ActorPlacement` list (`populate`); first pass: player-spawn only. See margen [`docs/population.md`](../../../../margen/docs/population.md). |
+| **margen_ffi** | Same repo — crate `margen_ffi`, header `include/margen.h` | C ABI for engine hosts (story grid + **world-faces** / `RenderFace` + placements bulk). |
+| **margen-godot** | Sibling repo **`margen-godot`** | Godot GDExtension: `MargenWorldMesh` converts face datasets into `ArrayMesh` + placeholder materials, then **applies actor placements** (instantiate) via the C ABI. |
 | **marloth** | This repo | Godot game; loads the extension from [`addons/margen/`](../../../../addons/margen/) and provides a debug scene. |
+
+**Actors** (Margen / Mythic / Marloth): spatial 3D objects that usually have logic and are usually visible—characters, props, missiles, interactibles, and invisible collision/trigger volumes (including spawn markers). Mesh geometry from surfacing is not an actor.
+
+**Realize order:** abstract generation builds the placement list before any scene work; the host builds the world mesh first, then instantiates actors from that list.
 
 Detailed design and port roadmap: margen repo [`docs/overview.md`](../../../../margen/docs/overview.md), [`docs/story-graph.md`](../../../../margen/docs/story-graph.md), [`docs/winding-path.md`](../../../../margen/docs/winding-path.md), [`docs/sector-analysis.md`](../../../../margen/docs/sector-analysis.md), and [`docs/mythic.md`](../../../../margen/docs/mythic.md) (sibling workspace folder **`margen`**). Style: [`docs/rust-style.md`](../../../../margen/docs/rust-style.md).
 
@@ -35,7 +40,7 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Stage 2 (analysis):** `partition_sectors` and `generate_goals` are ported in `margen_generation_graphing_analysis` (path-depth sector assignment and level-switch placement).
 
-**Margen Surfacing + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. The C ABI exposes **`margen_generate_world_faces`** (production `generate_world_grid` → face IR) and **`margen_world_faces_bulk`** (contiguous points/uvs + face descriptors). **margen-godot** builds meshes via `MargenWorldMesh` using the bulk export; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). The entry scene [`main.tscn`](../../../../main.tscn) instances that debug world until a real shell exists (F5 / Windows dist boot). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows outputs, from the attached marloth container run `./scripts/devcontainer.sh windows-dist` (packaged app → `$MARLOTH_WIN_OUT/dist`) or `windows-project` (editor tree → `$MARLOTH_WIN_OUT/project`); default parent is `/mnt/e/dev/games/marloth-godot`. File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or dist dir.
+**Margen Surfacing + population + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. Population math lives in `margen_generation_population` (first pass: player-spawn `ActorPlacement` at `player_start`). The C ABI exposes **`margen_generate_world_faces`** (grid → populate → face IR), **`margen_world_faces_bulk`**, and **`margen_world_faces_placements_bulk`**. **margen-godot** builds meshes via `MargenWorldMesh`, then instantiates placeholder actors from placements; Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn). The entry scene [`main.tscn`](../../../../main.tscn) instances that debug world until a real shell exists (F5 / Windows dist boot). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows outputs, from the attached marloth container run `./scripts/devcontainer.sh windows-dist` (packaged app → `$MARLOTH_WIN_OUT/dist`) or `windows-project` (editor tree → `$MARLOTH_WIN_OUT/project`); default parent is `/mnt/e/dev/games/marloth-godot`. File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or dist dir.
 
 ### Debug scene contract (functional tests)
 
@@ -55,7 +60,7 @@ Godot playbooks (via `./scripts/run_godot_functional_tests.sh`, which runs [`scr
 | Playbook | Requirement |
 |----------|-------------|
 | `MargenExtensionLoaded` | `ClassDB.class_exists("MargenWorldMesh")` |
-| `MargenWorldDebug` | After load + frames: `MeshInstance3D` at `MargenWorldMesh/MeshInstance3D` has a mesh with `surface_count > 0` and total `vertex_count` in **`[200, 4000]`** (inclusive). Calibrated observation on Godot 4.6 headless: **800** vertices across **3** surfaces for this seed/max_blocks. |
+| `MargenWorldDebug` | After load + frames: `MeshInstance3D` at `MargenWorldMesh/MeshInstance3D` has a mesh with `surface_count > 0` and total `vertex_count` in **`[200, 4000]`** (inclusive). Calibrated observation on Godot 4.6 headless: **800** vertices across **3** surfaces for this seed/max_blocks. Also requires placeholder actor `MargenWorldMesh/Actors/PlayerSpawnLocation` (empty `Node3D` from player-spawn placement). |
 
 The vertex band is a functional tolerance (not bit-exact). Tighten the band in this doc and in `MargenWorldDebugPlaybook` if generation becomes more tightly specified. Lower-layer C ABI coverage remains in margen (`cargo test` / `ffi_world_faces_smoke`). Exterior face culling (Godot clockwise front faces) is covered by margen RH-outward unit tests plus host reversal in margen-godot; visual confirm in the Windows editor when changing winding.
 
