@@ -19,6 +19,7 @@ pub const VERTEX_MIN: i32 = 200;
 pub const VERTEX_MAX: i32 = 4000;
 pub const DEBUG_WORLD_SCENE: &str = "res://scenes/margen_world_debug.tscn";
 pub const MESH_PATH: &str = "MargenWorldMesh/MeshInstance3D";
+pub const WORLD_COLLISION_PATH: &str = "MargenWorldMesh/WorldCollision";
 pub const PLAYER_SPAWN_PATH: &str = "MargenWorldMesh/Actors/PlayerSpawnLocation";
 pub const CHARACTER_PAWN_PATH: &str = "CharacterPawn";
 
@@ -166,24 +167,39 @@ fn margen_world_debug(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 		Ok(info) => info,
 		Err(e) => return PlaybookOutcome::fail(e, format!("path={path};root={root}")),
 	};
-	let spawn_info = match (ops.mesh_vertex_count)(PLAYER_SPAWN_PATH) {
+	let collision_info = match (ops.mesh_vertex_count)(WORLD_COLLISION_PATH) {
 		Ok(info) => info,
 		Err(e) => {
 			return PlaybookOutcome::fail(e, format!("path={path};root={root};mesh_ok=pending"));
 		}
 	};
-	outcome_from_mesh_and_spawn(path, root, mesh_info, spawn_info)
+	let spawn_info = match (ops.mesh_vertex_count)(PLAYER_SPAWN_PATH) {
+		Ok(info) => info,
+		Err(e) => {
+			return PlaybookOutcome::fail(
+				e,
+				format!("path={path};root={root};mesh_ok=pending;collision_ok=pending"),
+			);
+		}
+	};
+	outcome_from_mesh_collision_and_spawn(path, root, mesh_info, collision_info, spawn_info)
 }
 
-fn outcome_from_mesh_and_spawn(
+fn outcome_from_mesh_collision_and_spawn(
 	path: String,
 	root: String,
 	info: MeshInfo,
+	collision: MeshInfo,
 	spawn: MeshInfo,
 ) -> PlaybookOutcome {
 	let diagnostics = format!(
-		"path={path};root={root};mesh_found={};has_mesh={};surfaces={};vertices={};spawn_found={}",
-		info.found, info.has_mesh, info.surface_count, info.vertex_count, spawn.found
+		"path={path};root={root};mesh_found={};has_mesh={};surfaces={};vertices={};collision_found={};spawn_found={}",
+		info.found,
+		info.has_mesh,
+		info.surface_count,
+		info.vertex_count,
+		collision.found,
+		spawn.found
 	);
 	if !info.found {
 		return PlaybookOutcome::fail(format!("Node '{MESH_PATH}' not found."), diagnostics);
@@ -203,6 +219,12 @@ fn outcome_from_mesh_and_spawn(
 				"Vertex count {} outside documented band [{VERTEX_MIN}, {VERTEX_MAX}].",
 				info.vertex_count
 			),
+			diagnostics,
+		);
+	}
+	if !collision.found {
+		return PlaybookOutcome::fail(
+			format!("World collision '{WORLD_COLLISION_PATH}' not found after generate."),
 			diagnostics,
 		);
 	}
