@@ -1,7 +1,9 @@
 //! C ABI for marloth_sim and automation bootstrap.
 
 use marloth_automation::{start_automation, stop_automation, GodotOpsVtable};
-use marloth_sim::{InputFrame, ServiceReplyBlob, Sim, SnapshotEntity, VERSION};
+use marloth_sim::{
+	ActorId, InputFrame, Pose, ServiceReplyBlob, Sim, SimError, SnapshotEntity, VERSION,
+};
 use std::cell::RefCell;
 use std::ffi::{c_char, CStr, CString};
 use std::os::raw::c_int;
@@ -168,6 +170,88 @@ pub unsafe extern "C" fn marloth_sim_snapshot(
 		*out_entity_count = b.len();
 	});
 	0
+}
+
+#[repr(C)]
+pub struct MarlothPose {
+	pub x: f32,
+	pub y: f32,
+	pub z: f32,
+	pub yaw: f32,
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn marloth_sim_bootstrap_local_player(
+	sim: *mut MarlothSim,
+	spawn: *const MarlothPose,
+	out_player_id: *mut u32,
+	out_character_id: *mut u32,
+	out_actor_id: *mut u32,
+) -> c_int {
+	clear_last_error();
+	if sim.is_null()
+		|| spawn.is_null()
+		|| out_player_id.is_null()
+		|| out_character_id.is_null()
+		|| out_actor_id.is_null()
+	{
+		set_last_error("null bootstrap argument");
+		return 1;
+	}
+	let s = &*spawn;
+	let pose = Pose {
+		x: s.x,
+		y: s.y,
+		z: s.z,
+		yaw: s.yaw,
+	};
+	match (*sim).inner.bootstrap_local_player(pose) {
+		Ok((player_id, character_id, actor_id)) => {
+			*out_player_id = player_id.0;
+			*out_character_id = character_id.0;
+			*out_actor_id = actor_id.0;
+			0
+		}
+		Err(SimError::AlreadyBootstrapped) => {
+			set_last_error("local player already bootstrapped");
+			2
+		}
+		Err(SimError::UnknownActor) => {
+			set_last_error("unknown actor");
+			2
+		}
+	}
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn marloth_sim_set_actor_pose(
+	sim: *mut MarlothSim,
+	actor_id: u32,
+	pose: *const MarlothPose,
+) -> c_int {
+	clear_last_error();
+	if sim.is_null() || pose.is_null() {
+		set_last_error("sim or pose is null");
+		return 1;
+	}
+	let p = &*pose;
+	let pose = Pose {
+		x: p.x,
+		y: p.y,
+		z: p.z,
+		yaw: p.yaw,
+	};
+	match (*sim).inner.set_actor_pose(ActorId(actor_id), pose) {
+		Ok(()) => 0,
+		Err(SimError::UnknownActor) => {
+			set_last_error("unknown actor");
+			2
+		}
+		Err(SimError::AlreadyBootstrapped) => {
+			set_last_error("already bootstrapped");
+			2
+		}
+	}
 }
 
 #[repr(C)]

@@ -7,14 +7,18 @@ pub const PLAYBOOK_IDS: &[&str] = &[
 	"MargenExtensionLoaded",
 	"MargenWorldDebug",
 	"MarlothSimHostLoaded",
+	"LocalPlayerPawnSpawned",
 ];
 
 pub const MARGEN_CLASS: &str = "MargenWorldMesh";
 pub const MARLOTH_SIM_CLASS: &str = "MarlothSimHost";
+pub const PLAYER_CONTROLLER_CLASS: &str = "MarlothPlayerController";
+pub const AI_CONTROLLER_CLASS: &str = "MarlothAIController";
 pub const VERTEX_MIN: i32 = 200;
 pub const VERTEX_MAX: i32 = 4000;
 pub const MESH_PATH: &str = "MargenWorldMesh/MeshInstance3D";
 pub const PLAYER_SPAWN_PATH: &str = "MargenWorldMesh/Actors/PlayerSpawnLocation";
+pub const CHARACTER_PAWN_PATH: &str = "MarlothSimHost/CharacterPawn";
 
 #[derive(Debug)]
 pub struct PlaybookOutcome {
@@ -47,6 +51,7 @@ pub fn run_playbook_with(ops: &PlaybookGodotOps, id: &str, _args_json: &str) -> 
 		"MargenExtensionLoaded" => margen_extension_loaded(ops),
 		"MargenWorldDebug" => margen_world_debug(ops),
 		"MarlothSimHostLoaded" => marloth_sim_host_loaded(ops),
+		"LocalPlayerPawnSpawned" => local_player_pawn_spawned(ops),
 		other => PlaybookOutcome::fail(format!("unknown playbook '{other}'"), ""),
 	}
 }
@@ -91,6 +96,44 @@ fn marloth_sim_host_loaded(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 		),
 		Err(e) => PlaybookOutcome::fail(e, ""),
 	}
+}
+
+fn local_player_pawn_spawned(ops: &PlaybookGodotOps) -> PlaybookOutcome {
+	for class_name in [PLAYER_CONTROLLER_CLASS, AI_CONTROLLER_CLASS, MARLOTH_SIM_CLASS] {
+		match (ops.class_exists)(class_name) {
+			Ok(true) => {}
+			Ok(false) => {
+				return PlaybookOutcome::fail(
+					format!("ClassDB does not contain '{class_name}'"),
+					"",
+				);
+			}
+			Err(e) => return PlaybookOutcome::fail(e, ""),
+		}
+	}
+	if let Err(e) = (ops.load_scene)("res://main.tscn") {
+		return PlaybookOutcome::fail(e, "");
+	}
+	if let Err(e) = (ops.wait_frames)(30) {
+		return PlaybookOutcome::fail(e, "");
+	}
+	let path = (ops.scene_path)().unwrap_or_default();
+	let root = (ops.scene_root_name)().unwrap_or_default();
+	let pawn_info = match (ops.mesh_vertex_count)(CHARACTER_PAWN_PATH) {
+		Ok(info) => info,
+		Err(e) => return PlaybookOutcome::fail(e, format!("path={path};root={root}")),
+	};
+	let diagnostics = format!(
+		"path={path};root={root};pawn_found={};classes=ok",
+		pawn_info.found
+	);
+	if !pawn_info.found {
+		return PlaybookOutcome::fail(
+			format!("Character pawn '{CHARACTER_PAWN_PATH}' not found after bootstrap."),
+			diagnostics,
+		);
+	}
+	PlaybookOutcome::ok(diagnostics)
 }
 
 fn margen_world_debug(ops: &PlaybookGodotOps) -> PlaybookOutcome {

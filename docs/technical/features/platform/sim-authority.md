@@ -12,4 +12,8 @@ Positions and yaw are **right-handed Z-up** in the sim; `MarlothSimHost` convert
 4. Use C++ GDExtension only as glue (`MarlothSimHost`, service adapters). Prefer GDScript only when Godot APIs force it.
 5. Add unit tests in `marloth_sim` for discrete contracts; use Godot playbooks for scene/client behavior.
 
+## Interim: client CharacterBody3D locomotion
+
+For the first-person pawn slice, **planar locomotion and look** run on the Godot client (`CharacterBody3D` + `move_and_slide` via `MarlothPlayerController`). The sim still owns **Player / Character / Actor** associations and stores **last-known actor pose** reported each tick from the host. This is intentional interim behavior until locomotion moves fully into `marloth_sim`. Details: [players-characters-actors](../gameplay/players-characters-actors.md).
+
 See [Technical design](../../technical-design.md) and [testing.md](testing.md).

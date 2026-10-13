@@ -57,6 +57,27 @@ MarlothStatus marloth_sim_snapshot(
 		const MarlothSnapshotEntity **out_entities,
 		size_t *out_entity_count);
 
+/* RH Z-up pose. Hosts convert from Godot before calling. */
+typedef struct MarlothPose {
+	float x;
+	float y;
+	float z;
+	float yaw;
+} MarlothPose;
+
+/* Creates local player 0 + character + actor. Fails if already bootstrapped. */
+MarlothStatus marloth_sim_bootstrap_local_player(
+		MarlothSim *sim,
+		const MarlothPose *spawn,
+		uint32_t *out_player_id,
+		uint32_t *out_character_id,
+		uint32_t *out_actor_id);
+
+MarlothStatus marloth_sim_set_actor_pose(
+		MarlothSim *sim,
+		uint32_t actor_id,
+		const MarlothPose *pose);
+
 /* Automation */
 
 typedef struct MarlothGodotOpsVtable {

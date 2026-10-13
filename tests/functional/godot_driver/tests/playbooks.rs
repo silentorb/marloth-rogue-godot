@@ -136,3 +136,11 @@ async fn marloth_sim_host_loaded() {
 	session.run_playbook("MarlothSimHostLoaded").await;
 	session.shutdown().await;
 }
+
+#[tokio::test]
+async fn local_player_pawn_spawned() {
+	ensure_natives(&find_project_root());
+	let mut session = GodotSession::start().await;
+	session.run_playbook("LocalPlayerPawnSpawned").await;
+	session.shutdown().await;
+}

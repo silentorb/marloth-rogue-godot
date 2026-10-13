@@ -1,6 +1,9 @@
 #include "register_types.h"
 
+#include "marloth_ai_controller.h"
 #include "marloth_automation_host.h"
+#include "marloth_pawn_controller.h"
+#include "marloth_player_controller.h"
 #include "marloth_sim_host.h"
 
 #include <cstdio>
@@ -17,9 +20,13 @@ void initialize_marloth_godot_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
+	GDREGISTER_CLASS(MarlothPawnController);
+	GDREGISTER_CLASS(MarlothPlayerController);
+	GDREGISTER_CLASS(MarlothAIController);
 	GDREGISTER_CLASS(MarlothSimHost);
 	GDREGISTER_CLASS(MarlothAutomationHost);
-	UtilityFunctions::push_warning("marloth_godot: initialized (MarlothSimHost, MarlothAutomationHost)");
+	UtilityFunctions::push_warning(
+			"marloth_godot: initialized (MarlothSimHost, controllers, MarlothAutomationHost)");
 }
 
 void uninitialize_marloth_godot_module(ModuleInitializationLevel p_level) {

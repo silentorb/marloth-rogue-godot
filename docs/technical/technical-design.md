@@ -46,7 +46,9 @@ World generation remains in sibling **margen** / **margen-godot** (Rust algorith
 | `./addons/margen` | Margen GDExtension (sibling build) |
 | `./tests/functional` | Godot playbook driver and docs |
 | `./main.tscn` | Entry / main scene (`run/main_scene`) |
+| `./scenes/` | Authored scenes (debug world, etc.) |
+| `./scenes/entities/` | Reusable entity presentation (e.g. `character_pawn.tscn`) |
 | `./logs/` | Local Godot file logs (`logs/marloth.log`) |
 | `project.godot` | Godot project settings |
 
-Additional layout dirs (e.g. `assets/`, `scenes/`, `entities/`, `ui/`) may be added as content grows; document them here when they become standard.
+Additional layout dirs (e.g. `assets/`, `ui/`) may be added as content grows; document them here when they become standard.

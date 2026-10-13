@@ -16,6 +16,7 @@ When a topic has both player-facing rules and engineering contracts, keep contra
 | [platform/world-generation.md](platform/world-generation.md) | **World generation** ownership (**mythic** vs **margen** vs **margen-godot**), **story graph** vs winding path, Unreal **Source/** vs **Plugins/** reference folders, devcontainer mounts, or porting from **`unreal-marloth`** / **`unreal-marloth-plugins`**. |
 | [platform/sim-authority.md](platform/sim-authority.md) | Where **new gameplay** belongs (`marloth_sim`), thin scene tree, bulk client/services sync. |
 | [platform/coordinates.md](platform/coordinates.md) | **Right-handed Z-up** in Rust/ABI vs Godot Y-up host conversion (`(x,y,z)→(x,z,-y)`). |
+| [gameplay/players-characters-actors.md](gameplay/players-characters-actors.md) | **Player / Character / Actor** ids and associations, bootstrap from spawn marker, pose report, **PawnController** possession. |
 | [../../game/features/gameplay/story-progression.md](../../game/features/gameplay/story-progression.md) | **Story progression** player flow, gating/backtracking design, or future narrative layers on the generation DAG. |
 | [../technical-design.md](../technical-design.md) | **Architecture**, docs-as-SoT, presentation vs logic boundaries, **Godot directory layout**, or TDD intent. |
 | [../../game/game-design.md](../../game/game-design.md) | Reading **gameplay vision** or high-level feel. **Do not edit** unless the user explicitly instructed changes to that file. |

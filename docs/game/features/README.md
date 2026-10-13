@@ -13,3 +13,4 @@ When a topic has both player-facing rules and engineering contracts, keep the pl
 |------|------------|
 | [../game-design.md](../game-design.md) | Reading **gameplay vision**, genre pillars, or high-level feel. **Do not edit** unless the user explicitly instructed changes to that file. |
 | [gameplay/story-progression.md](gameplay/story-progression.md) | **Progression beats**, story graph player flow, gating/backtracking intent, or future narrative layers on the generation DAG. |
+| [gameplay/players-characters.md](gameplay/players-characters.md) | **Local player**, first-person character feel, spawn-at-player-start, or single-player vs future multiplayer scope. |
