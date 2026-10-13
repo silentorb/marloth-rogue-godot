@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+# Push first-party workspace repos (host or container).
+# Skips read-only Unreal mounts and other reference-only folders.
+#
+# Usage:
+#   ./scripts/push
+#   ./scripts/push --dry-run
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+DRY_RUN=0
+
+usage() {
+	cat <<EOF
+Usage: $(basename "$0") [--dry-run]
+
+Push each editable sibling git repo that has an upstream:
+
+  marloth       ${ROOT}
+  margen        \$MARGEN_ROOT (default: /home/chris/dev/margen)
+  margen-godot  \$MARGEN_GODOT_ROOT (default: /home/chris/dev/margen-godot)
+
+Skips reference-only mounts (Unreal Source/Plugins).
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	-h | --help)
+		usage
+		exit 0
+		;;
+	--dry-run)
+		DRY_RUN=1
+		shift
+		;;
+	*)
+		echo "Unknown option: $1" >&2
+		usage >&2
+		exit 2
+		;;
+	esac
+done
+
+MARGEN_ROOT="${MARGEN_ROOT:-/home/chris/dev/margen}"
+MARGEN_GODOT_ROOT="${MARGEN_GODOT_ROOT:-/home/chris/dev/margen-godot}"
+
+# name|path
+REPOS=(
+	"marloth|${ROOT}"
+	"margen|${MARGEN_ROOT}"
+	"margen-godot|${MARGEN_GODOT_ROOT}"
+)
+
+failed=0
+pushed=0
+skipped=0
+
+push_repo() {
+	local name="$1"
+	local path="$2"
+
+	if [[ ! -d "${path}" ]]; then
+		echo "[skip] ${name}: missing ${path}"
+		skipped=$((skipped + 1))
+		return 0
+	fi
+
+	if ! git -C "${path}" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+		echo "[skip] ${name}: not a git repo (${path})"
+		skipped=$((skipped + 1))
+		return 0
+	fi
+
+	local toplevel
+	toplevel="$(git -C "${path}" rev-parse --show-toplevel)"
+	if [[ "${toplevel}" != "$(cd "${path}" && pwd)" ]]; then
+		echo "[skip] ${name}: ${path} is not a git root (toplevel ${toplevel})"
+		skipped=$((skipped + 1))
+		return 0
+	fi
+
+	if ! git -C "${path}" rev-parse --abbrev-ref '@{u}' >/dev/null 2>&1; then
+		echo "[skip] ${name}: no upstream configured"
+		skipped=$((skipped + 1))
+		return 0
+	fi
+
+	local branch ahead
+	branch="$(git -C "${path}" rev-parse --abbrev-ref HEAD)"
+	ahead="$(git -C "${path}" rev-list --count '@{u}..HEAD' 2>/dev/null || echo 0)"
+
+	if [[ "${ahead}" == "0" ]]; then
+		echo "[ok]   ${name}: ${branch} already up to date with upstream"
+		return 0
+	fi
+
+	if [[ "${DRY_RUN}" -eq 1 ]]; then
+		echo "[dry]  ${name}: would push ${branch} (${ahead} commit(s) ahead) → ${path}"
+		pushed=$((pushed + 1))
+		return 0
+	fi
+
+	echo "[push] ${name}: ${branch} (${ahead} commit(s) ahead)"
+	if git -C "${path}" push; then
+		pushed=$((pushed + 1))
+	else
+		echo "[fail] ${name}: git push failed" >&2
+		failed=$((failed + 1))
+	fi
+}
+
+for entry in "${REPOS[@]}"; do
+	name="${entry%%|*}"
+	path="${entry#*|}"
+	push_repo "${name}" "${path}"
+done
+
+echo
+echo "Done: pushed=${pushed} skipped=${skipped} failed=${failed}"
+if [[ "${failed}" -ne 0 ]]; then
+	exit 1
+fi
