@@ -130,10 +130,10 @@ async fn margen_world_debug() {
 }
 
 #[tokio::test]
-async fn marloth_sim_host_loaded() {
+async fn marloth_global_loaded() {
 	ensure_natives(&find_project_root());
 	let mut session = GodotSession::start().await;
-	session.run_playbook("MarlothSimHostLoaded").await;
+	session.run_playbook("MarlothGlobalLoaded").await;
 	session.shutdown().await;
 }
 

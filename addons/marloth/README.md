@@ -18,6 +18,6 @@ Build/install from the repo:
 Windows Godot needs `addons/marloth/bin/*.dll` beside `marloth.gdextension`. Without them you get
 `GDExtension dynamic library not found: 'res://addons/marloth/marloth.gdextension'`.
 
-Classes: `MarlothSimHost` (client↔sim bulk tick), `MarlothAutomationHost` (gRPC playbooks when `MARLOTH_AUTOMATION_ENABLED`).
+Classes: `MarlothGlobal` (autoload session/tick), `MarlothWorldScene` (thin world kickstart), pawn controllers, `MarlothAutomationHost` (gRPC playbooks when `MARLOTH_AUTOMATION_ENABLED`).
 
 See [`native/AGENTS.md`](../../native/AGENTS.md).

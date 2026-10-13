@@ -28,7 +28,7 @@ Specialization lives in built-in playbooks inside `marloth_automation`; the proc
 |------|------------------|---------|
 | **Unit (sim)** | `native/crates/marloth_sim` (`cargo test -p marloth_sim`) | Discrete logic—no Godot runtime. |
 | **Functional (Godot driver)** | `tests/functional/godot_driver` | Spawns Godot, tonic client, asserts playbook Ok. |
-| **Playbooks** | `native/crates/marloth_automation` | Built-in playbook ids (`MainSceneBootstrap`, `MargenExtensionLoaded`, `MargenWorldDebug`, `MarlothSimHostLoaded`). |
+| **Playbooks** | `native/crates/marloth_automation` | Built-in playbook ids (`MainSceneBootstrap`, `MargenExtensionLoaded`, `MargenWorldDebug`, `MarlothGlobalLoaded`, `LocalPlayerPawnSpawned`). |
 | **Automation host** | `MarlothAutomationHost` GDExtension + autoload scene | gRPC server + main-thread poll. |
 | **Functional (GDExtension)** | Same playbook stack | Extension load, ClassDB, mesh handoff — see [world-generation.md](world-generation.md). |
 

@@ -52,10 +52,12 @@ set(TARGET_NAME "marloth_godot")
 
 add_library(${TARGET_NAME} SHARED
 	src/register_types.cpp
+	src/session_bootstrap.cpp
 	src/marloth_pawn_controller.cpp
 	src/marloth_player_controller.cpp
 	src/marloth_ai_controller.cpp
-	src/marloth_sim_host.cpp
+	src/marloth_global.cpp
+	src/marloth_world_scene.cpp
 	src/marloth_automation_host.cpp
 )
 

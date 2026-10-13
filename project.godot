@@ -11,12 +11,13 @@ config_version=5
 [application]
 
 config/name="marloth"
-run/main_scene="res://main.tscn"
+run/main_scene="res://scenes/margen_world_debug.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
 [autoload]
 
+MarlothGlobal="*res://addons/marloth/global.tscn"
 MarlothAutomationHost="*res://addons/marloth/automation_host.tscn"
 
 [debug]

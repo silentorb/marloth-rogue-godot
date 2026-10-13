@@ -12,7 +12,7 @@ In-process **server-like** authority (`marloth_sim`) and C++ Godot glue. Godot p
 | `crates/marloth_ffi` | C ABI (`include/marloth.h`) |
 | `crates/marloth_automation` | tonic gRPC host + built-in playbooks |
 | `crates/marloth_automation_proto` | Protobuf definitions |
-| `gdextension/` | godot-cpp: `MarlothSimHost`, `MarlothAutomationHost` |
+| `gdextension/` | godot-cpp: `MarlothGlobal`, `MarlothWorldScene`, controllers, `MarlothAutomationHost` |
 
 ## Build
 
@@ -30,4 +30,4 @@ export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$PWD/target}"
 - Prefer **bulk** FFI (input frames, snapshot arrays, service blobs).
 - No generation algorithms here — those stay in **margen**.
 - Future gameplay rules land in `marloth_sim`, not in Godot scene scripts.
-- **Coordinates:** `marloth_sim` is right-handed Z-up; convert in GDExtension (`MarlothSimHost`), not in Rust. See [docs/technical/features/platform/coordinates.md](../docs/technical/features/platform/coordinates.md).
+- **Coordinates:** `marloth_sim` is right-handed Z-up; convert in GDExtension (`MarlothGlobal` / session library), not in Rust. See [docs/technical/features/platform/coordinates.md](../docs/technical/features/platform/coordinates.md).

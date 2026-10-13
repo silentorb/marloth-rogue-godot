@@ -2,7 +2,7 @@
 
 Authoritative **Player**, **Character**, and **Actor** records live in `marloth_sim`. They are **not** scene-tree nodes. Godot presents an **Actor** as a generic `CharacterBody3D` pawn and drives it through a **PawnController**.
 
-Player-facing intent: [players-characters](../../../game/features/gameplay/players-characters.md). Coordinates: [coordinates](../platform/coordinates.md). Authority: [sim-authority](../platform/sim-authority.md).
+Player-facing intent: [players-characters](../../../game/features/gameplay/players-characters.md). Coordinates: [coordinates](../platform/coordinates.md). Authority: [sim-authority](../platform/sim-authority.md). Session integration: [global-session](../platform/global-session.md).
 
 ## Associations
 
@@ -18,11 +18,11 @@ Ids are `u32` newtypes (`PlayerId`, `CharacterId`, `ActorId`). Tables are multip
 
 `Sim::bootstrap_local_player(spawn_pose)` creates player 0, a character, and an actor at the given RH Z-up pose, then links Player→Character→Actor. **Fails** if already bootstrapped.
 
-`MarlothSimHost` resolves `MargenWorldMesh/Actors/PlayerSpawnLocation`, converts Godot transform → sim pose, calls bootstrap, instances `scenes/entities/character_pawn.tscn`, and possesses it with `MarlothPlayerController`. Missing spawn marker is an **explicit failure** (error log; no possession).
+`MarlothWorldScene` kickstarts `MarlothGlobal.start_world_session(scene_root)`. Session library selects a spawn from Godot group **`player_spawn`** (descendants of the scene root; first match), converts Godot transform → sim pose, bootstraps, instances `res://scenes/entities/character_pawn.tscn` under the scene root, and possesses it with `MarlothPlayerController`. Missing spawn group members is an **explicit failure** (error log; no possession).
 
 ## Pose report (interim locomotion)
 
-Pawn locomotion uses Godot `CharacterBody3D` + `move_and_slide` on the **client** for this slice. Each tick the host reports the possessed pawn’s pose into the sim via `Sim::set_actor_pose` (unknown actor id → error). Snapshots emit one `SnapshotEntity` per actor. Sim `InputFrame` axes do **not** move actors while client locomotion owns movement.
+Pawn locomotion uses Godot `CharacterBody3D` + `move_and_slide` on the **client** for this slice. Each tick Global reports the possessed pawn’s pose into the sim via `Sim::set_actor_pose` (unknown actor id → error). Snapshots emit one `SnapshotEntity` per actor. Sim `InputFrame` axes do **not** move actors while client locomotion owns movement.
 
 This is an intentional interim versus full sim-authoritative locomotion; see [sim-authority](../platform/sim-authority.md).
 
@@ -36,9 +36,9 @@ This is an intentional interim versus full sim-authoritative locomotion; see [si
 
 The pawn scene is **not** player-specific. Either controller type may possess the same pawn class; only `MarlothPlayerController` is wired on boot.
 
-Spawned pawn is named `CharacterPawn` under `MarlothSimHost` and joins group `character_pawn`.
+Spawned pawn is named `CharacterPawn` under the world scene root and joins group `character_pawn`.
 
 ## Testing
 
 - **Unit** (`cargo test -p marloth_sim`): bootstrap links, pose → snapshot, double-bootstrap fails, unknown actor pose fails.
-- **Playbook** `LocalPlayerPawnSpawned`: ClassDB for controllers; node `MarlothSimHost/CharacterPawn` exists after `main.tscn` load.
+- **Playbook** `LocalPlayerPawnSpawned`: ClassDB for Global/WorldScene/controllers; `CharacterPawn` exists after loading the debug world scene.

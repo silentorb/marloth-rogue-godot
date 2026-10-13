@@ -3,13 +3,13 @@
 ## Project
 
 - **Engine**: Godot **4.6**, Forward Plus renderer, **Jolt** for 3D physics.
-- **Entry**: `run/main_scene` is `res://main.tscn` (see `project.godot`). Until a real shell exists, that scene instances [`scenes/margen_world_debug.tscn`](scenes/margen_world_debug.tscn) and hosts `MarlothSimHost`. PC file logging writes to `logs/marloth.log` (project- or exe-local; see `debug/file_logging` in `project.godot`).
+- **Entry**: `run/main_scene` is [`scenes/margen_world_debug.tscn`](scenes/margen_world_debug.tscn) (see `project.godot`). Thin `MarlothWorldScene` kickstarts a session via autoload `MarlothGlobal`. PC file logging writes to `logs/marloth.log` (project- or exe-local; see `debug/file_logging` in `project.godot`).
 - **Languages**: **Rust** for authoritative simulation (`native/crates/marloth_sim`); **C++** for GDExtension glue; **GDScript** only when Godot is awkward without it. No C# / .NET.
 - **Native modules**: see [`native/AGENTS.md`](native/AGENTS.md).
   - **`marloth_sim`** — engine-agnostic authoritative logic.
   - **`marloth_ffi`** — C ABI (`native/include/marloth.h`).
   - **`marloth_automation`** — in-process tonic playbook host.
-  - **`native/gdextension`** — `MarlothSimHost` (client sync) + `MarlothAutomationHost`.
+  - **`native/gdextension`** — `MarlothGlobal` (session/tick), `MarlothWorldScene`, controllers, `MarlothAutomationHost`.
   - Loaded from [`addons/marloth/`](addons/marloth/).
 
 ## Layout

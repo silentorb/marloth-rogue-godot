@@ -10,7 +10,8 @@ Godot playbooks use `MarlothAutomationHost` (GDExtension) and the Rust driver un
 - `MainSceneBootstrap`
 - `MargenExtensionLoaded`
 - `MargenWorldDebug`
-- `MarlothSimHostLoaded`
+- `MarlothGlobalLoaded`
+- `LocalPlayerPawnSpawned`
 
 Natives: `scripts/ensure-margen-natives.sh` and `scripts/ensure-marloth-natives.sh`.
 

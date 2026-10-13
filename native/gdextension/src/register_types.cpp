@@ -2,9 +2,10 @@
 
 #include "marloth_ai_controller.h"
 #include "marloth_automation_host.h"
+#include "marloth_global.h"
 #include "marloth_pawn_controller.h"
 #include "marloth_player_controller.h"
-#include "marloth_sim_host.h"
+#include "marloth_world_scene.h"
 
 #include <cstdio>
 
@@ -23,10 +24,11 @@ void initialize_marloth_godot_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(MarlothPawnController);
 	GDREGISTER_CLASS(MarlothPlayerController);
 	GDREGISTER_CLASS(MarlothAIController);
-	GDREGISTER_CLASS(MarlothSimHost);
+	GDREGISTER_CLASS(MarlothGlobal);
+	GDREGISTER_CLASS(MarlothWorldScene);
 	GDREGISTER_CLASS(MarlothAutomationHost);
 	UtilityFunctions::push_warning(
-			"marloth_godot: initialized (MarlothSimHost, controllers, MarlothAutomationHost)");
+			"marloth_godot: initialized (MarlothGlobal, MarlothWorldScene, controllers, MarlothAutomationHost)");
 }
 
 void uninitialize_marloth_godot_module(ModuleInitializationLevel p_level) {

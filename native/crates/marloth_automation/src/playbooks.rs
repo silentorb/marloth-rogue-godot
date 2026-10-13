@@ -6,19 +6,21 @@ pub const PLAYBOOK_IDS: &[&str] = &[
 	"MainSceneBootstrap",
 	"MargenExtensionLoaded",
 	"MargenWorldDebug",
-	"MarlothSimHostLoaded",
+	"MarlothGlobalLoaded",
 	"LocalPlayerPawnSpawned",
 ];
 
 pub const MARGEN_CLASS: &str = "MargenWorldMesh";
-pub const MARLOTH_SIM_CLASS: &str = "MarlothSimHost";
+pub const MARLOTH_GLOBAL_CLASS: &str = "MarlothGlobal";
+pub const MARLOTH_WORLD_SCENE_CLASS: &str = "MarlothWorldScene";
 pub const PLAYER_CONTROLLER_CLASS: &str = "MarlothPlayerController";
 pub const AI_CONTROLLER_CLASS: &str = "MarlothAIController";
 pub const VERTEX_MIN: i32 = 200;
 pub const VERTEX_MAX: i32 = 4000;
+pub const DEBUG_WORLD_SCENE: &str = "res://scenes/margen_world_debug.tscn";
 pub const MESH_PATH: &str = "MargenWorldMesh/MeshInstance3D";
 pub const PLAYER_SPAWN_PATH: &str = "MargenWorldMesh/Actors/PlayerSpawnLocation";
-pub const CHARACTER_PAWN_PATH: &str = "MarlothSimHost/CharacterPawn";
+pub const CHARACTER_PAWN_PATH: &str = "CharacterPawn";
 
 #[derive(Debug)]
 pub struct PlaybookOutcome {
@@ -50,14 +52,14 @@ pub fn run_playbook_with(ops: &PlaybookGodotOps, id: &str, _args_json: &str) -> 
 		"MainSceneBootstrap" => main_scene_bootstrap(ops),
 		"MargenExtensionLoaded" => margen_extension_loaded(ops),
 		"MargenWorldDebug" => margen_world_debug(ops),
-		"MarlothSimHostLoaded" => marloth_sim_host_loaded(ops),
+		"MarlothGlobalLoaded" => marloth_global_loaded(ops),
 		"LocalPlayerPawnSpawned" => local_player_pawn_spawned(ops),
 		other => PlaybookOutcome::fail(format!("unknown playbook '{other}'"), ""),
 	}
 }
 
 fn main_scene_bootstrap(ops: &PlaybookGodotOps) -> PlaybookOutcome {
-	if let Err(e) = (ops.load_scene)("res://main.tscn") {
+	if let Err(e) = (ops.load_scene)(DEBUG_WORLD_SCENE) {
 		return PlaybookOutcome::fail(e, "");
 	}
 	if let Err(e) = (ops.wait_frames)(10) {
@@ -87,11 +89,11 @@ fn margen_extension_loaded(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 	}
 }
 
-fn marloth_sim_host_loaded(ops: &PlaybookGodotOps) -> PlaybookOutcome {
-	match (ops.class_exists)(MARLOTH_SIM_CLASS) {
-		Ok(true) => PlaybookOutcome::ok(format!("class={MARLOTH_SIM_CLASS}")),
+fn marloth_global_loaded(ops: &PlaybookGodotOps) -> PlaybookOutcome {
+	match (ops.class_exists)(MARLOTH_GLOBAL_CLASS) {
+		Ok(true) => PlaybookOutcome::ok(format!("class={MARLOTH_GLOBAL_CLASS}")),
 		Ok(false) => PlaybookOutcome::fail(
-			format!("ClassDB does not contain '{MARLOTH_SIM_CLASS}'"),
+			format!("ClassDB does not contain '{MARLOTH_GLOBAL_CLASS}'"),
 			"",
 		),
 		Err(e) => PlaybookOutcome::fail(e, ""),
@@ -99,7 +101,12 @@ fn marloth_sim_host_loaded(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 }
 
 fn local_player_pawn_spawned(ops: &PlaybookGodotOps) -> PlaybookOutcome {
-	for class_name in [PLAYER_CONTROLLER_CLASS, AI_CONTROLLER_CLASS, MARLOTH_SIM_CLASS] {
+	for class_name in [
+		PLAYER_CONTROLLER_CLASS,
+		AI_CONTROLLER_CLASS,
+		MARLOTH_GLOBAL_CLASS,
+		MARLOTH_WORLD_SCENE_CLASS,
+	] {
 		match (ops.class_exists)(class_name) {
 			Ok(true) => {}
 			Ok(false) => {
@@ -111,7 +118,7 @@ fn local_player_pawn_spawned(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 			Err(e) => return PlaybookOutcome::fail(e, ""),
 		}
 	}
-	if let Err(e) = (ops.load_scene)("res://main.tscn") {
+	if let Err(e) = (ops.load_scene)(DEBUG_WORLD_SCENE) {
 		return PlaybookOutcome::fail(e, "");
 	}
 	if let Err(e) = (ops.wait_frames)(30) {
@@ -147,7 +154,7 @@ fn margen_world_debug(ops: &PlaybookGodotOps) -> PlaybookOutcome {
 		}
 		Err(e) => return PlaybookOutcome::fail(e, ""),
 	}
-	if let Err(e) = (ops.load_scene)("res://scenes/margen_world_debug.tscn") {
+	if let Err(e) = (ops.load_scene)(DEBUG_WORLD_SCENE) {
 		return PlaybookOutcome::fail(e, "");
 	}
 	if let Err(e) = (ops.wait_frames)(20) {
