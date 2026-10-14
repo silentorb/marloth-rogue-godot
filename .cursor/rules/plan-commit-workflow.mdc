@@ -52,9 +52,8 @@ Label each changed path:
 
 - **Pre-existing** — dirty before this plan
 - **Plan-scoped** — will change during implementation
-- **Unrelated** — out of scope; exclude from plan commits
 
-Include related pre-existing changes in the same per-repo commit. For unrelated dirty files, note "exclude" or ask before mixing.
+Include pre-existing dirty files in the same per-repo commit. Do **not** exclude them merely because they predate this plan. Still exclude secrets and anything the user explicitly asked to leave out.
 
 ## 3. Per-repo commit plan
 
