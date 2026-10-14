@@ -42,7 +42,7 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 
 **Margen Surfacing + population + visible geometry:** `generate_render_faces` is ported in `margen_generation_surfacing`. Population math lives in `margen_generation_population` (first pass: player-spawn `ActorPlacement` at `player_start`). The C ABI exposes **`margen_generate_world_faces`** (grid → populate → face IR), **`margen_world_faces_bulk`**, **`margen_world_faces_placements_bulk`**, and **`margen_world_faces_cells_bulk`** (path bits for editor viz). **margen-godot** builds meshes via `MargenWorldMesh`, realizes static trimesh collision at **`MargenWorldMesh/WorldCollision`**, then instantiates placeholder actors from placements (player-spawn markers join Godot group **`player_spawn`**); Marloth registers the extension under [`addons/margen/`](../../../../addons/margen/) and ships debug scene [`scenes/margen_world_debug.tscn`](../../../../scenes/margen_world_debug.tscn) as `run/main_scene` (thin `MarlothWorldScene` kickstarts session via `MarlothGlobal` — see [global-session](global-session.md)). Build the native library from **margen-godot** (`./scripts/build.sh`, then `./scripts/install-to-marloth.sh`) before opening the debug scene. For Windows outputs, from the attached marloth container run `./scripts/devcontainer.sh windows-dist` (packaged app → `$MARLOTH_WIN_OUT/dist`) or `windows-project` (editor tree → `$MARLOTH_WIN_OUT/project`); default parent is `/mnt/e/dev/games/marloth-godot`. File logging for PC runs goes to `logs/marloth.log` beside the project (editor) or dist dir.
 
-**Path visualization:** `MargenWorldMesh.annotations` is a bitflags inspector property (`Paths` = bit 0). When set, green/teal path spokes are drawn via RenderingServer (no scene-tree overlay node). See margen [`docs/generation-visualization.md`](../../../../margen/docs/generation-visualization.md).
+**Generation annotations:** `MargenWorldMesh.annotations` is a bitflags inspector property (`Paths` = bit 0, `CellBoundaries` = bit 1). Paths draw green/teal spokes; CellBoundaries draw an ideal hex prism wire (empty shared offsets — not the slope-deformed mesh edges). Both use batched RenderingServer line meshes (no scene-tree overlay nodes). See margen [`docs/generation-visualization.md`](../../../../margen/docs/generation-visualization.md).
 
 ### Debug scene contract (functional tests)
 
@@ -52,11 +52,11 @@ In Unreal reference, this path is toggled with `GENERATE_STORY`; the default pat
 |----------|-------|
 | `seed` | `7` |
 | `max_blocks` | `20` (primary **cell/block quantity** knob for the winding-path debug path) |
-| `cell_size` | `(2, 2, 2)` |
+| `cell_size` | `(3, 1, 3)` (Godot Y-up: horizontal 3, vertical 1) |
 | `auto_generate` | `true` |
-| `annotations` | `1` (`Paths` bit on) |
+| `annotations` | `3` (`Paths` + `CellBoundaries`) |
 
-After the node is ready, changing `seed`, `max_blocks`, or `cell_size` (inspector or script) schedules a **debounced** regenerate (~0.3 s after the last change). Initial generation from `_ready` when `auto_generate` is true stays immediate. Toggling `annotations` rebuilds path spokes from the cached cell bulk without requiring a full regenerate.
+After the node is ready, changing `seed`, `max_blocks`, or `cell_size` (inspector or script) schedules a **debounced** regenerate (~0.3 s after the last change). Initial generation from `_ready` when `auto_generate` is true stays immediate. Toggling `annotations` rebuilds path/boundary overlays from the cached cell bulk without requiring a full regenerate.
 
 Godot playbooks (via `./scripts/run_godot_functional_tests.sh`, which runs [`scripts/ensure-margen-natives.sh`](../../../../scripts/ensure-margen-natives.sh)):
 

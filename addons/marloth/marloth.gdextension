@@ -2,6 +2,7 @@
 
 entry_symbol = "marloth_godot_library_init"
 compatibility_minimum = "4.5"
+reloadable = true
 
 [libraries]
 

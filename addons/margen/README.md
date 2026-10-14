@@ -50,7 +50,7 @@ Inspector knobs on `MargenWorldMesh`: `seed`, `max_blocks` (cell/block quantity)
 
 F5 / Windows Desktop export boots [`scenes/margen_world_debug.tscn`](../../scenes/margen_world_debug.tscn) until a real shell exists (`run/main_scene`).
 
-Contract for automated tests: seed=`7`, max_blocks=`20`, cell_size=`(2,2,2)` — see [world-generation.md](../../docs/technical/features/platform/world-generation.md).
+Contract for automated tests: seed=`7`, max_blocks=`20`, cell_size=`(3,1,3)` — see [world-generation.md](../../docs/technical/features/platform/world-generation.md).
 
 ## Functional tests (primary gate)
 
